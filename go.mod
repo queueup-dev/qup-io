@@ -1,4 +1,4 @@
-module github.com/queueup-dev/qup-io.git
+module github.com/queueup-dev/qup-io
 
 go 1.13
 
