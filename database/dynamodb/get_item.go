@@ -1,6 +1,7 @@
 package Dynamodb
 
 import (
+	"errors"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
@@ -19,6 +20,10 @@ func GetItem(connection *dynamodb.DynamoDB, table string, primaryKey string, val
 
 	if err != nil {
 		return nil, err
+	}
+
+	if result.Item == nil {
+		return nil, errors.New("item not found")
 	}
 
 	return &ResultSet{output: result}, nil
