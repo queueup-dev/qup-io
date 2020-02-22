@@ -1,14 +1,9 @@
 package http
 
-import (
-	"io"
-)
-
 func Get(
 	client Client,
 	url string,
-	headers map[string]string,
-	body io.Reader,
+	headers *map[string]string,
 ) (Result, error) {
-	return Request(client, "GET", url, &headers, body)
+	return Request(client, "GET", url, headers, nil)
 }

@@ -7,8 +7,8 @@ import (
 func Post(
 	client Client,
 	url string,
-	headers map[string]string,
 	body io.Reader,
+	headers *map[string]string,
 ) (Result, error) {
-	return Request(client, "POST", url, &headers, body)
+	return Request(client, "POST", url, headers, body)
 }

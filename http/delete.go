@@ -7,8 +7,8 @@ import (
 func Delete(
 	client Client,
 	url string,
-	headers map[string]string,
 	body io.Reader,
+	headers *map[string]string,
 ) (Result, error) {
-	return Request(client, "DELETE", url, &headers, body)
+	return Request(client, "DELETE", url, headers, body)
 }
