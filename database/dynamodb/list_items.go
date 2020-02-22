@@ -1,0 +1,7 @@
+package Dynamodb
+
+import "github.com/aws/aws-sdk-go/service/dynamodb"
+
+func ListItems(connection *dynamodb.DynamoDB) {
+
+}
