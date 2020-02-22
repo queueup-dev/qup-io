@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/xml"
 	"io"
+	"io/ioutil"
 )
 
 type XmlResult struct {
@@ -11,4 +12,15 @@ type XmlResult struct {
 
 func (x XmlResult) Unmarshal(object interface{}) error {
 	return xml.NewDecoder(x.output).Decode(object)
+}
+
+func (x XmlResult) ToString() (*string, error) {
+	result, err := ioutil.ReadAll(x.output)
+
+	if err != nil {
+		return nil, err
+	}
+
+	stringResult := string(result)
+	return &stringResult, nil
 }

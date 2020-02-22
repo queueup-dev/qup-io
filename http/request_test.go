@@ -72,7 +72,9 @@ func TestFailedRequest(t *testing.T) {
 		&MockClient{
 			statusCode: 400,
 			body:       nil,
-			header:     http.Header{},
+			header: http.Header{
+				"Content-Type": {"application/json"},
+			},
 		},
 		"POST",
 		"http://example.org",
@@ -104,7 +106,9 @@ func TestSuccessRequest(t *testing.T) {
 		&MockClient{
 			statusCode: 200,
 			body:       strings.NewReader("{ \"status\": \"success\"}"),
-			header:     http.Header{},
+			header: http.Header{
+				"Content-Type": {"application/json"},
+			},
 		},
 		"POST",
 		"http://example.org",

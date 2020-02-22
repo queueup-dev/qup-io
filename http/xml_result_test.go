@@ -11,8 +11,8 @@ func TestXmlResult_Unmarshal(t *testing.T) {
 		Hello string `xml:"hello"`
 	}{}
 
-	io := strings.NewReader("{ \"hello\": \"world\"}")
-	result := &JsonResult{
+	io := strings.NewReader("<testObject><hello>world</hello></testObject>")
+	result := &XmlResult{
 		output: io,
 	}
 
@@ -24,5 +24,18 @@ func TestXmlResult_Unmarshal(t *testing.T) {
 
 	if testObject.Hello != "world" {
 		t.Failed()
+	}
+}
+
+func TestXmlResult_ToString(t *testing.T) {
+	io := strings.NewReader("<testObject><hello>world</hello></testObject>")
+	result := &XmlResult{
+		output: io,
+	}
+
+	text, _ := result.ToString()
+
+	if *text != "<testObject><hello>world</hello></testObject>" {
+		t.Fail()
 	}
 }

@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"io"
+	"io/ioutil"
 )
 
 type JsonResult struct {
@@ -11,4 +12,15 @@ type JsonResult struct {
 
 func (j JsonResult) Unmarshal(object interface{}) error {
 	return json.NewDecoder(j.output).Decode(object)
+}
+
+func (j JsonResult) ToString() (*string, error) {
+	result, err := ioutil.ReadAll(j.output)
+
+	if err != nil {
+		return nil, err
+	}
+
+	stringResult := string(result)
+	return &stringResult, nil
 }

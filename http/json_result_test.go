@@ -43,3 +43,16 @@ func TestJsonResult_Unmarshal(t *testing.T) {
 		t.Failed()
 	}
 }
+
+func TestJsonResult_ToString(t *testing.T) {
+	io := strings.NewReader("{ \"hello\": \"world\"}")
+	result := &XmlResult{
+		output: io,
+	}
+
+	text, _ := result.ToString()
+
+	if *text != "{ \"hello\": \"world\"}" {
+		t.Fail()
+	}
+}

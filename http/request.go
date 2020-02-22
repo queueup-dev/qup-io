@@ -46,9 +46,13 @@ func createResponseObject(response *http.Response) (Result, error) {
 		return &XmlResult{
 			output: response.Body,
 		}, nil
+	case "application/json", "application/json+error":
+		return &JsonResult{
+			output: response.Body,
+		}, nil
 	}
 
-	return &JsonResult{
+	return &RawResult{
 		output: response.Body,
 	}, nil
 }
