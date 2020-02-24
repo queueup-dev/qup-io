@@ -21,6 +21,14 @@ func Get(
 	return Request(client, "GET", url, headers, nil)
 }
 
+func Head(
+	client Client,
+	url string,
+	headers *map[string]string,
+) (Result, HttpError, error) {
+	return Request(client, "HEAD", url, headers, nil)
+}
+
 func Options(
 	client Client,
 	url string,
