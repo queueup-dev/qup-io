@@ -33,6 +33,17 @@ func TestRawResult_Unmarshal(t *testing.T) {
 	}
 }
 
+func TestRawResult_Valid(t *testing.T) {
+	io := strings.NewReader("Hello World")
+	result := &RawResult{
+		output: io,
+	}
+
+	if !result.Valid() {
+		t.Fail()
+	}
+}
+
 func TestRawResult_Casting(t *testing.T) {
 	testObject := struct {
 		Hello string `json:"hello"`

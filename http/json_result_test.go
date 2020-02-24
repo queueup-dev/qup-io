@@ -44,9 +44,29 @@ func TestJsonResult_Unmarshal(t *testing.T) {
 	}
 }
 
+func TestJsonResult_Valid(t *testing.T) {
+	io := strings.NewReader("{ \"hello\": \"world\"}")
+	result := &JsonResult{
+		output: io,
+	}
+
+	if !result.Valid() {
+		t.Fail()
+	}
+
+	io = strings.NewReader(" \"hello\": \"world\"}")
+	result = &JsonResult{
+		output: io,
+	}
+
+	if result.Valid() {
+		t.Fail()
+	}
+}
+
 func TestJsonResult_ToString(t *testing.T) {
 	io := strings.NewReader("{ \"hello\": \"world\"}")
-	result := &XmlResult{
+	result := &JsonResult{
 		output: io,
 	}
 

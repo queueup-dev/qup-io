@@ -14,6 +14,10 @@ func (r RawResult) Unmarshal(object interface{}) error {
 	return errors.New("unable to unmarshal plain text")
 }
 
+func (r RawResult) Valid() bool {
+	return true
+}
+
 func (r RawResult) ToString() (*string, error) {
 	result, err := ioutil.ReadAll(r.output)
 

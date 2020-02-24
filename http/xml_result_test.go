@@ -27,6 +27,26 @@ func TestXmlResult_Unmarshal(t *testing.T) {
 	}
 }
 
+func TestXmlResult_Valid(t *testing.T) {
+	io := strings.NewReader("<testObject><hello>world</hello></testObject>")
+	result := &XmlResult{
+		output: io,
+	}
+
+	if !result.Valid() {
+		t.Fail()
+	}
+
+	io = strings.NewReader("testObject>hello>world</hello></testObject>")
+	result = &XmlResult{
+		output: io,
+	}
+
+	if result.Valid() {
+		t.Fail()
+	}
+}
+
 func TestXmlResult_ToString(t *testing.T) {
 	io := strings.NewReader("<testObject><hello>world</hello></testObject>")
 	result := &XmlResult{
