@@ -36,7 +36,7 @@ func TestSuccessXmlRequest(t *testing.T) {
 	io := strings.NewReader("<Hello>world</Hello>")
 	headers := http.Header{}
 	headers.Add("Content-Type", "application/xml")
-	result, err := Request(
+	result, httpError, err := Request(
 		&MockClient{
 			statusCode: 200,
 			body:       strings.NewReader("<ResponseObject><status>success</status></ResponseObject>"),
@@ -50,7 +50,7 @@ func TestSuccessXmlRequest(t *testing.T) {
 		io,
 	)
 
-	if err != nil {
+	if err != nil || httpError != nil {
 		t.Fatal(err)
 	}
 
@@ -68,10 +68,10 @@ func TestSuccessXmlRequest(t *testing.T) {
 
 func TestFailedRequest(t *testing.T) {
 	io := strings.NewReader("{ \"hello\": \"world\"}")
-	_, err := Request(
+	_, httpError, err := Request(
 		&MockClient{
 			statusCode: 400,
-			body:       nil,
+			body:       strings.NewReader("{ \"status\": \"failed\"}"),
 			header: http.Header{
 				"Content-Type": {"application/json"},
 			},
@@ -84,17 +84,16 @@ func TestFailedRequest(t *testing.T) {
 		io,
 	)
 
-	if err == nil {
+	if err != nil || httpError == nil {
 		t.Fail()
 	}
 
-	httpError, ok := err.(HttpError)
-
-	if !ok {
+	if httpError.StatusCode() != 400 {
 		t.Fail()
 	}
 
-	if httpError.statusCode != 400 {
+	message, err := httpError.HttpResponse().ToString()
+	if *message != "{ \"status\": \"failed\"}" {
 		t.Fail()
 	}
 }
@@ -102,7 +101,7 @@ func TestFailedRequest(t *testing.T) {
 func TestSuccessRequest(t *testing.T) {
 
 	io := strings.NewReader("{ \"hello\": \"world\"}")
-	result, err := Request(
+	result, httpError, err := Request(
 		&MockClient{
 			statusCode: 200,
 			body:       strings.NewReader("{ \"status\": \"success\"}"),
@@ -118,7 +117,7 @@ func TestSuccessRequest(t *testing.T) {
 		io,
 	)
 
-	if err != nil {
+	if err != nil || httpError != nil {
 		t.Fatal(err)
 	}
 

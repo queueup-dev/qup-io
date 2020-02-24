@@ -11,11 +11,11 @@ func Request(
 	url string,
 	headers *map[string]string,
 	body io.Reader,
-) (Result, error) {
+) (Result, HttpError, error) {
 	request, err := http.NewRequest(method, url, body)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	for key, value := range *headers {
@@ -25,16 +25,20 @@ func Request(
 	response, err := client.Do(request)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	_, httpError := isSuccessful(response)
+	result, err := createResponseObject(response)
 
-	if httpError != nil {
-		return nil, *httpError
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return createResponseObject(response)
+	if !isSuccessful(response) {
+		return nil, NewHttpError(response.StatusCode, result), nil
+	}
+
+	return result, nil, nil
 }
 
 func createResponseObject(response *http.Response) (Result, error) {
@@ -57,14 +61,9 @@ func createResponseObject(response *http.Response) (Result, error) {
 	}, nil
 }
 
-func isSuccessful(response *http.Response) (bool, *HttpError) {
-
+func isSuccessful(response *http.Response) bool {
 	if response.StatusCode >= 400 {
-		return false, &HttpError{
-			statusCode: response.StatusCode,
-			message:    "Invalid response status",
-		}
+		return false
 	}
-
-	return true, nil
+	return true
 }
