@@ -45,3 +45,12 @@ func Post(
 ) (Result, HttpError, error) {
 	return Request(client, "POST", url, headers, body)
 }
+
+func Put(
+	client Client,
+	url string,
+	body io.Reader,
+	headers *map[string]string,
+) (Result, HttpError, error) {
+	return Request(client, "PUT", url, headers, body)
+}
