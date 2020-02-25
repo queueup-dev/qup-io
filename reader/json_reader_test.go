@@ -1,4 +1,4 @@
-package http
+package reader
 
 import (
 	"strings"
@@ -11,7 +11,7 @@ func TestJsonResult_Unmarshal_InvalidJson(t *testing.T) {
 	}{}
 
 	io := strings.NewReader("{ \"hello: \"world\"}")
-	result := &JsonResult{
+	result := &JsonReader{
 		output: io,
 	}
 
@@ -29,7 +29,7 @@ func TestJsonResult_Unmarshal(t *testing.T) {
 	}{}
 
 	io := strings.NewReader("{ \"hello\": \"world\"}")
-	result := &JsonResult{
+	result := &JsonReader{
 		output: io,
 	}
 
@@ -46,7 +46,7 @@ func TestJsonResult_Unmarshal(t *testing.T) {
 
 func TestJsonResult_Valid(t *testing.T) {
 	io := strings.NewReader("{ \"hello\": \"world\"}")
-	result := &JsonResult{
+	result := &JsonReader{
 		output: io,
 	}
 
@@ -55,7 +55,7 @@ func TestJsonResult_Valid(t *testing.T) {
 	}
 
 	io = strings.NewReader(" \"hello\": \"world\"}")
-	result = &JsonResult{
+	result = &JsonReader{
 		output: io,
 	}
 
@@ -66,7 +66,7 @@ func TestJsonResult_Valid(t *testing.T) {
 
 func TestJsonResult_ToString(t *testing.T) {
 	io := strings.NewReader("{ \"hello\": \"world\"}")
-	result := &JsonResult{
+	result := &JsonReader{
 		output: io,
 	}
 

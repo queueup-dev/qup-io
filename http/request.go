@@ -1,7 +1,8 @@
 package http
 
 import (
-	"io"
+	"github.com/queueup-dev/qup-io/reader"
+	"github.com/queueup-dev/qup-types"
 	"net/http"
 )
 
@@ -10,9 +11,15 @@ func Request(
 	method string,
 	url string,
 	headers *map[string]string,
-	body io.Reader,
-) (Result, HttpError, error) {
-	request, err := http.NewRequest(method, url, body)
+	body types.PayloadWriter,
+) (types.PayloadReader, HttpError, error) {
+	bodyReader, err := body.Reader()
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	request, err := http.NewRequest(method, url, bodyReader)
 
 	if err != nil {
 		return nil, nil, err
@@ -41,24 +48,18 @@ func Request(
 	return result, nil, nil
 }
 
-func createResponseObject(response *http.Response) (Result, error) {
+func createResponseObject(response *http.Response) (types.PayloadReader, error) {
 
 	contentType := response.Header.Get("Content-Type")
 
 	switch contentType {
 	case "application/xml", "text/xml":
-		return &XmlResult{
-			output: response.Body,
-		}, nil
+		return reader.NewXmlReader(response.Body), nil
 	case "application/json", "application/json+error":
-		return &JsonResult{
-			output: response.Body,
-		}, nil
+		return reader.NewJsonReader(response.Body), nil
 	}
 
-	return &RawResult{
-		output: response.Body,
-	}, nil
+	return reader.NewRawReader(response.Body), nil
 }
 
 func isSuccessful(response *http.Response) bool {

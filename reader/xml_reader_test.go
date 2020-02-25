@@ -1,4 +1,4 @@
-package http
+package reader
 
 import (
 	"strings"
@@ -12,7 +12,7 @@ func TestXmlResult_Unmarshal(t *testing.T) {
 	}{}
 
 	io := strings.NewReader("<testObject><hello>world</hello></testObject>")
-	result := &XmlResult{
+	result := &XmlReader{
 		output: io,
 	}
 
@@ -29,7 +29,7 @@ func TestXmlResult_Unmarshal(t *testing.T) {
 
 func TestXmlResult_Valid(t *testing.T) {
 	io := strings.NewReader("<testObject><hello>world</hello></testObject>")
-	result := &XmlResult{
+	result := &XmlReader{
 		output: io,
 	}
 
@@ -38,7 +38,7 @@ func TestXmlResult_Valid(t *testing.T) {
 	}
 
 	io = strings.NewReader("testObject>hello>world</hello></testObject>")
-	result = &XmlResult{
+	result = &XmlReader{
 		output: io,
 	}
 
@@ -49,7 +49,7 @@ func TestXmlResult_Valid(t *testing.T) {
 
 func TestXmlResult_ToString(t *testing.T) {
 	io := strings.NewReader("<testObject><hello>world</hello></testObject>")
-	result := &XmlResult{
+	result := &XmlReader{
 		output: io,
 	}
 

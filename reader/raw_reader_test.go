@@ -1,4 +1,4 @@
-package http
+package reader
 
 import (
 	"strings"
@@ -12,7 +12,7 @@ func TestRawResult_Unmarshal(t *testing.T) {
 	}{}
 
 	io := strings.NewReader("Hello I'm muzzy")
-	result := &RawResult{
+	result := &RawReader{
 		output: io,
 	}
 
@@ -35,7 +35,7 @@ func TestRawResult_Unmarshal(t *testing.T) {
 
 func TestRawResult_Valid(t *testing.T) {
 	io := strings.NewReader("Hello World")
-	result := &RawResult{
+	result := &RawReader{
 		output: io,
 	}
 
@@ -50,11 +50,11 @@ func TestRawResult_Casting(t *testing.T) {
 	}{}
 
 	io := strings.NewReader("{ \"hello\": \"world\"}")
-	result := &RawResult{
+	result := &RawReader{
 		output: io,
 	}
 
-	jsonResult := JsonResult(*result)
+	jsonResult := JsonReader(*result)
 	err := jsonResult.Unmarshal(&testObject)
 
 	if err != nil {

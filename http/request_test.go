@@ -1,6 +1,7 @@
 package http
 
 import (
+	"github.com/queueup-dev/qup-io/writer"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -32,8 +33,13 @@ type ResponseObject struct {
 	Status string `json:"status" xml:"status"`
 }
 
+type HelloWorld struct {
+	Hello string `xml:"Hello" json:"hello"`
+}
+
 func TestSuccessXmlRequest(t *testing.T) {
-	io := strings.NewReader("<Hello>world</Hello>")
+	xmlWriter := writer.NewXmlWriter(&HelloWorld{Hello: "world"})
+
 	headers := http.Header{}
 	headers.Add("Content-Type", "application/xml")
 	result, httpError, err := Request(
@@ -47,7 +53,7 @@ func TestSuccessXmlRequest(t *testing.T) {
 		&map[string]string{
 			"Content-Type": "application/xml",
 		},
-		io,
+		xmlWriter,
 	)
 
 	if err != nil || httpError != nil {
@@ -67,7 +73,7 @@ func TestSuccessXmlRequest(t *testing.T) {
 }
 
 func TestFailedRequest(t *testing.T) {
-	io := strings.NewReader("{ \"hello\": \"world\"}")
+	jsonWriter := writer.NewJsonWriter(&HelloWorld{Hello: "world"})
 	_, httpError, err := Request(
 		&MockClient{
 			statusCode: 400,
@@ -81,7 +87,7 @@ func TestFailedRequest(t *testing.T) {
 		&map[string]string{
 			"Content-Type": "application/json",
 		},
-		io,
+		jsonWriter,
 	)
 
 	if err != nil || httpError == nil {
@@ -100,7 +106,7 @@ func TestFailedRequest(t *testing.T) {
 
 func TestSuccessRequest(t *testing.T) {
 
-	io := strings.NewReader("{ \"hello\": \"world\"}")
+	jsonWriter := writer.NewJsonWriter(&HelloWorld{Hello: "world"})
 	result, httpError, err := Request(
 		&MockClient{
 			statusCode: 200,
@@ -114,7 +120,7 @@ func TestSuccessRequest(t *testing.T) {
 		&map[string]string{
 			"X-Test-Header": "Hi",
 		},
-		io,
+		jsonWriter,
 	)
 
 	if err != nil || httpError != nil {

@@ -1,6 +1,7 @@
 package http
 
 import (
+	types "github.com/queueup-dev/qup-types"
 	"net/http"
 	"strconv"
 )
@@ -8,16 +9,16 @@ import (
 type HttpError interface {
 	StatusCode() int
 	Error() string
-	HttpResponse() Result
+	HttpResponse() types.PayloadReader
 }
 
 type Error struct {
 	statusCode int
 	message    string
-	response   Result
+	response   types.PayloadReader
 }
 
-func (e Error) HttpResponse() Result {
+func (e Error) HttpResponse() types.PayloadReader {
 	return e.response
 }
 
@@ -29,7 +30,7 @@ func (e Error) Error() string {
 	return e.message
 }
 
-func NewHttpError(statusCode int, response Result) HttpError {
+func NewHttpError(statusCode int, response types.PayloadReader) HttpError {
 	message := "[HTTP:" + strconv.Itoa(statusCode) + "] " + http.StatusText(statusCode)
 
 	return &Error{
