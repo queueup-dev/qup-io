@@ -7,7 +7,12 @@ import (
 )
 
 type RawWriter struct {
-	input interface{}
+	input  interface{}
+	target string
+}
+
+func (r RawWriter) GetTarget() string {
+	return r.target
 }
 
 func (r RawWriter) Marshal() ([]byte, error) {

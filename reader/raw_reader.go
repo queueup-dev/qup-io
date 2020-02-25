@@ -8,6 +8,11 @@ import (
 
 type RawReader struct {
 	output io.Reader
+	source string
+}
+
+func (r RawReader) GetSource() string {
+	return r.source
 }
 
 func (r RawReader) Unmarshal(object interface{}) error {

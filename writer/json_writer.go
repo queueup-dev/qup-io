@@ -7,7 +7,12 @@ import (
 )
 
 type JsonWriter struct {
-	input interface{}
+	input  interface{}
+	target string
+}
+
+func (j JsonWriter) GetTarget() string {
+	return j.target
 }
 
 func (j JsonWriter) Marshal() ([]byte, error) {

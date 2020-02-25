@@ -2,14 +2,14 @@ package reader
 
 import "io"
 
-func NewJsonReader(stream io.Reader) *JsonReader {
-	return &JsonReader{output: stream}
+func NewJsonReader(stream io.Reader, source string) *JsonReader {
+	return &JsonReader{output: stream, source: source}
 }
 
-func NewXmlReader(stream io.Reader) *XmlReader {
-	return &XmlReader{output: stream}
+func NewXmlReader(stream io.Reader, source string) *XmlReader {
+	return &XmlReader{output: stream, source: source}
 }
 
-func NewRawReader(stream io.Reader) *RawReader {
-	return &RawReader{output: stream}
+func NewRawReader(stream io.Reader, source string) *RawReader {
+	return &RawReader{output: stream, source: source}
 }

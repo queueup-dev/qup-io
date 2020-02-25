@@ -38,7 +38,7 @@ type HelloWorld struct {
 }
 
 func TestSuccessXmlRequest(t *testing.T) {
-	xmlWriter := writer.NewXmlWriter(&HelloWorld{Hello: "world"})
+	xmlWriter := writer.NewXmlWriter(&HelloWorld{Hello: "world"}, "http://example.org")
 
 	headers := http.Header{}
 	headers.Add("Content-Type", "application/xml")
@@ -49,7 +49,6 @@ func TestSuccessXmlRequest(t *testing.T) {
 			header:     headers,
 		},
 		"POST",
-		"http://example.org",
 		&map[string]string{
 			"Content-Type": "application/xml",
 		},
@@ -73,7 +72,7 @@ func TestSuccessXmlRequest(t *testing.T) {
 }
 
 func TestFailedRequest(t *testing.T) {
-	jsonWriter := writer.NewJsonWriter(&HelloWorld{Hello: "world"})
+	jsonWriter := writer.NewJsonWriter(&HelloWorld{Hello: "world"}, "http://example.org")
 	_, httpError, err := Request(
 		&MockClient{
 			statusCode: 400,
@@ -83,7 +82,6 @@ func TestFailedRequest(t *testing.T) {
 			},
 		},
 		"POST",
-		"http://example.org",
 		&map[string]string{
 			"Content-Type": "application/json",
 		},
@@ -106,7 +104,7 @@ func TestFailedRequest(t *testing.T) {
 
 func TestSuccessRequest(t *testing.T) {
 
-	jsonWriter := writer.NewJsonWriter(&HelloWorld{Hello: "world"})
+	jsonWriter := writer.NewJsonWriter(&HelloWorld{Hello: "world"}, "http://example.org")
 	result, httpError, err := Request(
 		&MockClient{
 			statusCode: 200,
@@ -116,7 +114,6 @@ func TestSuccessRequest(t *testing.T) {
 			},
 		},
 		"POST",
-		"http://example.org",
 		&map[string]string{
 			"X-Test-Header": "Hi",
 		},

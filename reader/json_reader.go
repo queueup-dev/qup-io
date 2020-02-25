@@ -8,6 +8,11 @@ import (
 
 type JsonReader struct {
 	output io.Reader
+	source string
+}
+
+func (j JsonReader) GetSource() string {
+	return j.source
 }
 
 func (j JsonReader) Unmarshal(object interface{}) error {

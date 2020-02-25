@@ -8,6 +8,11 @@ import (
 
 type XmlReader struct {
 	output io.Reader
+	source string
+}
+
+func (x XmlReader) GetSource() string {
+	return x.source
 }
 
 func (x XmlReader) Unmarshal(object interface{}) error {

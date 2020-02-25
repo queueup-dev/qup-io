@@ -7,7 +7,12 @@ import (
 )
 
 type XmlWriter struct {
-	input interface{}
+	input  interface{}
+	target string
+}
+
+func (x XmlWriter) GetTarget() string {
+	return x.target
 }
 
 func (x XmlWriter) Marshal() ([]byte, error) {

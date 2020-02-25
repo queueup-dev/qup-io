@@ -9,11 +9,11 @@ import (
 func Request(
 	client Client,
 	method string,
-	url string,
 	headers *map[string]string,
 	body types.PayloadWriter,
 ) (types.PayloadReader, HttpError, error) {
 	bodyReader, err := body.Reader()
+	url := body.GetTarget()
 
 	if err != nil {
 		return nil, nil, err
@@ -35,7 +35,7 @@ func Request(
 		return nil, nil, err
 	}
 
-	result, err := createResponseObject(response)
+	result, err := createResponseObject(response, url)
 
 	if err != nil {
 		return nil, nil, err
@@ -48,18 +48,18 @@ func Request(
 	return result, nil, nil
 }
 
-func createResponseObject(response *http.Response) (types.PayloadReader, error) {
+func createResponseObject(response *http.Response, url string) (types.PayloadReader, error) {
 
 	contentType := response.Header.Get("Content-Type")
 
 	switch contentType {
 	case "application/xml", "text/xml":
-		return reader.NewXmlReader(response.Body), nil
+		return reader.NewXmlReader(response.Body, url), nil
 	case "application/json", "application/json+error":
-		return reader.NewJsonReader(response.Body), nil
+		return reader.NewJsonReader(response.Body, url), nil
 	}
 
-	return reader.NewRawReader(response.Body), nil
+	return reader.NewRawReader(response.Body, url), nil
 }
 
 func isSuccessful(response *http.Response) bool {
