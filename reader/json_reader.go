@@ -19,12 +19,14 @@ func (j JsonReader) Valid() bool {
 	return j.Unmarshal(&test) == nil
 }
 
-func (j JsonReader) Reader() io.Reader {
-	return j.output
+func (j JsonReader) Reader() (io.Reader, error) {
+	return j.output, nil
 }
 
 func (j JsonReader) Bytes() ([]byte, error) {
-	return ioutil.ReadAll(j.output)
+	reader, _ := j.Reader()
+
+	return ioutil.ReadAll(reader)
 }
 
 func (j JsonReader) ToString() (*string, error) {

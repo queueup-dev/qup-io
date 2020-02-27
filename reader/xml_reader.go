@@ -19,12 +19,14 @@ func (x XmlReader) Valid() bool {
 	return x.Unmarshal(&test) == nil
 }
 
-func (x XmlReader) Reader() io.Reader {
-	return x.output
+func (x XmlReader) Reader() (io.Reader, error) {
+	return x.output, nil
 }
 
 func (x XmlReader) Bytes() ([]byte, error) {
-	return ioutil.ReadAll(x.Reader())
+	reader, _ := x.Reader()
+
+	return ioutil.ReadAll(reader)
 }
 
 func (x XmlReader) ToString() (*string, error) {

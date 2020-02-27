@@ -10,7 +10,17 @@ type JsonWriter struct {
 	input interface{}
 }
 
-func (j JsonWriter) Marshal() ([]byte, error) {
+func (j JsonWriter) Bytes() ([]byte, error) {
+	marshalOutput, err := j.Marshal()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return marshalOutput.([]byte), nil
+}
+
+func (j JsonWriter) Marshal() (interface{}, error) {
 	return json.Marshal(j.input)
 }
 
@@ -26,21 +36,23 @@ func (j JsonWriter) Valid() bool {
 
 func (j JsonWriter) Reader() (io.Reader, error) {
 	content, err := j.Marshal()
+	bytes := content.([]byte)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return strings.NewReader(string(content)), nil
+	return strings.NewReader(string(bytes)), nil
 }
 
 func (j JsonWriter) ToString() (*string, error) {
 	content, err := j.Marshal()
+	bytes := content.([]byte)
 
 	if err != nil {
 		return nil, err
 	}
 
-	output := string(content)
+	output := string(bytes)
 	return &output, nil
 }

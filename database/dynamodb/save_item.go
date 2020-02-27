@@ -1,13 +1,15 @@
-package Dynamodb
+package dynamodb
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	types "github.com/queueup-dev/qup-types"
 )
 
-func SaveItem(connection dynamodb.DynamoDB, table string, data interface{}) error {
-	record, err := dynamodbattribute.MarshalMap(data)
+func SaveItem(connection dynamodb.DynamoDB, table string, writer types.PayloadWriter) error {
+
+	content, err := writer.Marshal()
+	record := content.(map[string]*dynamodb.AttributeValue)
 
 	if err != nil {
 		return err

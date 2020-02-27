@@ -18,12 +18,14 @@ func (r RawReader) Valid() bool {
 	return true
 }
 
-func (r RawReader) Reader() io.Reader {
-	return r.output
+func (r RawReader) Reader() (io.Reader, error) {
+	return r.output, nil
 }
 
 func (r RawReader) Bytes() ([]byte, error) {
-	return ioutil.ReadAll(r.Reader())
+	reader, _ := r.Reader()
+
+	return ioutil.ReadAll(reader)
 }
 
 func (r RawReader) ToString() (*string, error) {

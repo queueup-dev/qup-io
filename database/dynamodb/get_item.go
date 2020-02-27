@@ -1,4 +1,4 @@
-package Dynamodb
+package dynamodb
 
 import (
 	"errors"
@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
-func GetItem(connection *dynamodb.DynamoDB, table string, primaryKey string, value string) (*ResultSet, error) {
+func GetItem(connection *dynamodb.DynamoDB, table string, primaryKey string, value string) (*DynamoReader, error) {
 	input := &dynamodb.GetItemInput{
 		TableName: aws.String(table),
 		Key: map[string]*dynamodb.AttributeValue{
@@ -26,5 +26,5 @@ func GetItem(connection *dynamodb.DynamoDB, table string, primaryKey string, val
 		return nil, errors.New("item not found")
 	}
 
-	return &ResultSet{output: result}, nil
+	return &DynamoReader{output: result}, nil
 }
