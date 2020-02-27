@@ -60,3 +60,7 @@ func (d DynamoWriter) ToString() (*string, error) {
 	output := fmt.Sprint(content)
 	return &output, nil
 }
+
+func NewDynamoWriter(input interface{}) *DynamoWriter {
+	return &DynamoWriter{input: input}
+}
