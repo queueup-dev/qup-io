@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"io"
 )
@@ -26,7 +25,7 @@ func (d DynamoWriter) Bytes() ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func (d DynamoWriter) Marshal() (map[string]*dynamodb.AttributeValue, error) {
+func (d DynamoWriter) Marshal() (interface{}, error) {
 	return dynamodbattribute.MarshalMap(d.input)
 }
 
