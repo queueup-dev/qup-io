@@ -29,10 +29,14 @@ func NewLambdaSentryLogger(dsn string, environment string, event events.APIGatew
 }
 
 func BeforeEventContextCallback(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
-	queryString, _ := json.Marshal(proxyEvent.QueryStringParameters)
 
-	event.Request.QueryString = string(queryString)
+	if proxyEvent.QueryStringParameters != nil {
+		queryString, _ := json.Marshal(proxyEvent.QueryStringParameters)
+		event.Request.QueryString = string(queryString)
+	}
+
 	event.Request.Data = proxyEvent.Body
+	event.Request.Headers = proxyEvent.Headers
 
 	return event
 }
