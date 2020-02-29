@@ -28,7 +28,7 @@ func NewLambdaSentryLogger(dsn string, environment string, event events.APIGatew
 	return &Logger{}
 }
 
-func BeforeEventContextCallback(event *sentry.Event, hint *sentry.EventHint) *Event {
+func BeforeEventContextCallback(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
 	queryString, _ := json.Marshal(proxyEvent.QueryStringParameters)
 
 	event.Request.QueryString = string(queryString)
