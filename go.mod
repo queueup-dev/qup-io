@@ -5,5 +5,6 @@ go 1.13
 require (
 	github.com/aws/aws-sdk-go v1.29.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/queueup-dev/qup-types v0.0.0-20200226141022-17fcb7209a18
+	github.com/getsentry/sentry-go v0.5.1
+	github.com/queueup-dev/qup-types v0.0.0-20200229152453-12d65fb1eb5e
 )
