@@ -6,5 +6,5 @@ require (
 	github.com/aws/aws-sdk-go v1.29.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/getsentry/sentry-go v0.5.1
-	github.com/queueup-dev/qup-types v0.0.0-20200229152453-12d65fb1eb5e
+	github.com/queueup-dev/qup-types v0.0.0-20200229153059-a91111529fb3
 )
