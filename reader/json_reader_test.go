@@ -11,8 +11,8 @@ func TestJsonResult_Unmarshal_InvalidJson(t *testing.T) {
 	}{}
 
 	io := strings.NewReader("{ \"hello: \"world\"}")
-	result := &JsonReader{
-		output: io,
+	result := &jsonReader{
+		input: io,
 	}
 
 	err := result.Unmarshal(&testObject)
@@ -29,8 +29,8 @@ func TestJsonResult_Unmarshal(t *testing.T) {
 	}{}
 
 	io := strings.NewReader("{ \"hello\": \"world\"}")
-	result := &JsonReader{
-		output: io,
+	result := &jsonReader{
+		input: io,
 	}
 
 	err := result.Unmarshal(&testObject)
@@ -46,8 +46,8 @@ func TestJsonResult_Unmarshal(t *testing.T) {
 
 func TestJsonResult_Valid(t *testing.T) {
 	io := strings.NewReader("{ \"hello\": \"world\"}")
-	result := &JsonReader{
-		output: io,
+	result := &jsonReader{
+		input: io,
 	}
 
 	if !result.Valid() {
@@ -55,8 +55,8 @@ func TestJsonResult_Valid(t *testing.T) {
 	}
 
 	io = strings.NewReader(" \"hello\": \"world\"}")
-	result = &JsonReader{
-		output: io,
+	result = &jsonReader{
+		input: io,
 	}
 
 	if result.Valid() {
@@ -66,8 +66,8 @@ func TestJsonResult_Valid(t *testing.T) {
 
 func TestJsonResult_ToString(t *testing.T) {
 	io := strings.NewReader("{ \"hello\": \"world\"}")
-	result := &JsonReader{
-		output: io,
+	result := &jsonReader{
+		input: io,
 	}
 
 	text, _ := result.ToString()

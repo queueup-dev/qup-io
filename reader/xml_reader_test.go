@@ -12,8 +12,8 @@ func TestXmlResult_Unmarshal(t *testing.T) {
 	}{}
 
 	io := strings.NewReader("<testObject><hello>world</hello></testObject>")
-	result := &XmlReader{
-		output: io,
+	result := &xmlReader{
+		input: io,
 	}
 
 	err := result.Unmarshal(&testObject)
@@ -29,8 +29,8 @@ func TestXmlResult_Unmarshal(t *testing.T) {
 
 func TestXmlResult_Valid(t *testing.T) {
 	io := strings.NewReader("<testObject><hello>world</hello></testObject>")
-	result := &XmlReader{
-		output: io,
+	result := &xmlReader{
+		input: io,
 	}
 
 	if !result.Valid() {
@@ -38,8 +38,8 @@ func TestXmlResult_Valid(t *testing.T) {
 	}
 
 	io = strings.NewReader("testObject>hello>world</hello></testObject>")
-	result = &XmlReader{
-		output: io,
+	result = &xmlReader{
+		input: io,
 	}
 
 	if result.Valid() {
@@ -49,8 +49,8 @@ func TestXmlResult_Valid(t *testing.T) {
 
 func TestXmlResult_ToString(t *testing.T) {
 	io := strings.NewReader("<testObject><hello>world</hello></testObject>")
-	result := &XmlReader{
-		output: io,
+	result := &xmlReader{
+		input: io,
 	}
 
 	text, _ := result.ToString()

@@ -6,30 +6,30 @@ import (
 	"io/ioutil"
 )
 
-type RawReader struct {
-	output io.Reader
+type rawReader struct {
+	input io.Reader
 }
 
-func (r RawReader) Unmarshal(object interface{}) error {
+func (r rawReader) Unmarshal(object interface{}) error {
 	return errors.New("unable to unmarshal plain text")
 }
 
-func (r RawReader) Valid() bool {
+func (r rawReader) Valid() bool {
 	return true
 }
 
-func (r RawReader) Reader() (io.Reader, error) {
-	return r.output, nil
+func (r rawReader) Reader() (io.Reader, error) {
+	return r.input, nil
 }
 
-func (r RawReader) Bytes() ([]byte, error) {
+func (r rawReader) Bytes() ([]byte, error) {
 	reader, _ := r.Reader()
 
 	return ioutil.ReadAll(reader)
 }
 
-func (r RawReader) ToString() (*string, error) {
-	result, err := ioutil.ReadAll(r.output)
+func (r rawReader) ToString() (*string, error) {
+	result, err := ioutil.ReadAll(r.input)
 
 	if err != nil {
 		return nil, err
