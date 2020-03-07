@@ -2,41 +2,47 @@ package sentry
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/getsentry/sentry-go"
 	types "github.com/queueup-dev/qup-types"
+	"io"
+	"strings"
 	"time"
 )
 
-var (
-	proxyEvent events.APIGatewayProxyRequest
-)
+type ProxyEvent events.APIGatewayProxyRequest
 
-func NewLambdaSentryLogger(dsn string, environment string, event events.APIGatewayProxyRequest) types.Logger {
-	sentrySyncTransport := sentry.NewHTTPSyncTransport()
-	sentrySyncTransport.Timeout = time.Second * 3
+func (e ProxyEvent) ApplyToSentryEvent(event *sentry.Event) {
 
-	sentry.Init(sentry.ClientOptions{
-		Dsn:         dsn,
-		Environment: environment,
-		Transport:   sentrySyncTransport,
-		BeforeSend:  BeforeEventContextCallback,
-	})
-
-	proxyEvent = event
-
-	return &Logger{}
-}
-
-func BeforeEventContextCallback(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
-
-	if proxyEvent.QueryStringParameters != nil {
-		queryString, _ := json.Marshal(proxyEvent.QueryStringParameters)
+	if e.QueryStringParameters != nil {
+		queryString, _ := json.Marshal(e.QueryStringParameters)
 		event.Request.QueryString = string(queryString)
 	}
 
-	event.Request.Data = proxyEvent.Body
-	event.Request.Headers = proxyEvent.Headers
+	event.Request.Data = e.Body
+	event.Request.Headers = e.Headers
+}
 
-	return event
+func (e ProxyEvent) GetPayload() io.Reader {
+	return strings.NewReader(e.Body)
+}
+
+func NewLambdaSentryLogger(dsn string, environment string) types.Logger {
+	sentrySyncTransport := sentry.NewHTTPSyncTransport()
+	sentrySyncTransport.Timeout = time.Second * 3
+
+	err := sentry.Init(sentry.ClientOptions{
+		Dsn:         dsn,
+		Environment: environment,
+		Transport:   sentrySyncTransport,
+	})
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return &Logger{
+		hub: sentry.CurrentHub(),
+	}
 }
