@@ -26,5 +26,5 @@ func GetItem(connection *dynamodb.DynamoDB, table string, primaryKey string, val
 		return nil, errors.New("item not found")
 	}
 
-	return &DynamoReader{output: result}, nil
+	return &DynamoReader{output: result.Item}, nil
 }

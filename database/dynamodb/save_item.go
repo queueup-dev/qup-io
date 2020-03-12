@@ -6,21 +6,26 @@ import (
 	types "github.com/queueup-dev/qup-types"
 )
 
-func SaveItem(connection dynamodb.DynamoDB, table string, writer types.PayloadWriter) error {
+func SaveItem(connection *dynamodb.DynamoDB, table string, writer types.PayloadWriter) (types.PayloadReader, error) {
 
 	content, err := writer.Marshal()
 	record := content.(map[string]*dynamodb.AttributeValue)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	input := &dynamodb.PutItemInput{
-		Item:      record,
-		TableName: aws.String(table),
+		Item:         record,
+		TableName:    aws.String(table),
+		ReturnValues: aws.String("ALL_OLD"),
 	}
 
-	_, err = connection.PutItem(input)
+	result, err := connection.PutItem(input)
 
-	return err
+	if err != nil {
+		return nil, err
+	}
+
+	return NewDynamoReader(result.Attributes), err
 }

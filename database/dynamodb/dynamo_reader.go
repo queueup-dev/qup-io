@@ -9,7 +9,7 @@ import (
 )
 
 type DynamoReader struct {
-	output *dynamodb.GetItemOutput
+	output map[string]*dynamodb.AttributeValue
 }
 
 func (d DynamoReader) Bytes() ([]byte, error) {
@@ -26,7 +26,7 @@ func (d DynamoReader) Bytes() ([]byte, error) {
 }
 
 func (d DynamoReader) Unmarshal(object interface{}) error {
-	return dynamodbattribute.UnmarshalMap(d.output.Item, object)
+	return dynamodbattribute.UnmarshalMap(d.output, object)
 }
 
 func (d DynamoReader) Valid() bool {
@@ -42,4 +42,12 @@ func (d DynamoReader) Reader() (io.Reader, error) {
 	}
 
 	return bytes.NewReader(outputBytes), nil
+}
+
+func (d DynamoReader) ToString() (*string, error) {
+	return nil, nil
+}
+
+func NewDynamoReader(input map[string]*dynamodb.AttributeValue) *DynamoReader {
+	return &DynamoReader{output: input}
 }
