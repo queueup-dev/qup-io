@@ -12,8 +12,8 @@ func TestRawResult_Unmarshal(t *testing.T) {
 	}{}
 
 	io := strings.NewReader("Hello I'm muzzy")
-	result := &RawReader{
-		output: io,
+	result := &rawReader{
+		input: io,
 	}
 
 	err := result.Unmarshal(&testObject)
@@ -35,8 +35,8 @@ func TestRawResult_Unmarshal(t *testing.T) {
 
 func TestRawResult_Valid(t *testing.T) {
 	io := strings.NewReader("Hello World")
-	result := &RawReader{
-		output: io,
+	result := &rawReader{
+		input: io,
 	}
 
 	if !result.Valid() {
@@ -50,11 +50,11 @@ func TestRawResult_Casting(t *testing.T) {
 	}{}
 
 	io := strings.NewReader("{ \"hello\": \"world\"}")
-	result := &RawReader{
-		output: io,
+	result := &rawReader{
+		input: io,
 	}
 
-	jsonResult := JsonReader(*result)
+	jsonResult := jsonReader(*result)
 	err := jsonResult.Unmarshal(&testObject)
 
 	if err != nil {
