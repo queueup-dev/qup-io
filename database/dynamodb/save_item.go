@@ -18,7 +18,7 @@ func SaveItem(connection *dynamodb.DynamoDB, table string, writer types.PayloadW
 	input := &dynamodb.PutItemInput{
 		Item:         record,
 		TableName:    aws.String(table),
-		ReturnValues: aws.String("ALL_OLD"),
+		ReturnValues: aws.String("ALL_NEW"),
 	}
 
 	result, err := connection.PutItem(input)
