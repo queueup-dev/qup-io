@@ -47,7 +47,7 @@ func Request(
 	}
 
 	if !isSuccessful(response) {
-		return nil, simplifyHeaders(response.Header), NewHttpError(response.StatusCode, result), nil
+		return result, simplifyHeaders(response.Header), NewHttpError(response.StatusCode, result), nil
 	}
 
 	return result, simplifyHeaders(response.Header), nil, nil
