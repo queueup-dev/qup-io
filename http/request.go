@@ -4,48 +4,63 @@ import (
 	"github.com/queueup-dev/qup-io/reader"
 	"github.com/queueup-dev/qup-types"
 	"net/http"
+	"strings"
 )
+
+type Headers map[string]string
 
 func Request(
 	client Client,
 	method string,
 	url string,
-	headers *map[string]string,
+	headers *Headers,
 	body types.PayloadWriter,
-) (types.PayloadReader, HttpError, error) {
+) (types.PayloadReader, Headers, HttpError, error) {
 	bodyReader, err := body.Reader()
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	request, err := http.NewRequest(method, url, bodyReader)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	for key, value := range *headers {
-		request.Header.Add(key, value)
+	if headers != nil {
+		for key, value := range *headers {
+			request.Header.Add(key, value)
+		}
 	}
 
 	response, err := client.Do(request)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	result, err := createResponseObject(response)
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	if !isSuccessful(response) {
-		return nil, NewHttpError(response.StatusCode, result), nil
+		return nil, simplifyHeaders(response.Header), NewHttpError(response.StatusCode, result), nil
 	}
 
-	return result, nil, nil
+	return result, simplifyHeaders(response.Header), nil, nil
+}
+
+func simplifyHeaders(headers http.Header) Headers {
+	simplifiedHeaders := Headers{}
+
+	for key, values := range headers {
+		simplifiedHeaders[key] = strings.Join(values, " ")
+	}
+
+	return simplifiedHeaders
 }
 
 func createResponseObject(response *http.Response) (types.PayloadReader, error) {
@@ -55,7 +70,7 @@ func createResponseObject(response *http.Response) (types.PayloadReader, error) 
 	switch contentType {
 	case "application/xml", "text/xml":
 		return reader.NewXmlReader(response.Body), nil
-	case "application/json", "application/json+error":
+	case "application/json", "application/problem+json":
 		return reader.NewJsonReader(response.Body), nil
 	}
 
