@@ -56,3 +56,7 @@ func (x XmlWriter) ToString() (*string, error) {
 	output := string(bytes)
 	return &output, nil
 }
+
+func (x XmlWriter) ContentType() string {
+	return "text/xml"
+}

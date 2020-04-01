@@ -39,3 +39,7 @@ func (j jsonReader) ToString() (*string, error) {
 	stringResult := string(result)
 	return &stringResult, nil
 }
+
+func (j jsonReader) ContentType() string {
+	return "application/json"
+}

@@ -56,3 +56,7 @@ func (j JsonWriter) ToString() (*string, error) {
 	output := string(bytes)
 	return &output, nil
 }
+
+func (j JsonWriter) ContentType() string {
+	return "application/json"
+}

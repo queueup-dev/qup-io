@@ -40,3 +40,7 @@ func (x xmlReader) ToString() (*string, error) {
 	stringResult := string(result)
 	return &stringResult, nil
 }
+
+func (x xmlReader) ContentType() string {
+	return "text/xml"
+}

@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/queueup-dev/qup-io/reader"
+	"github.com/queueup-dev/qup-io/writer"
 	"github.com/queueup-dev/qup-types"
 	"net/http"
 	"strings"
@@ -16,6 +17,10 @@ func Request(
 	headers *Headers,
 	body types.PayloadWriter,
 ) (types.PayloadReader, Headers, HttpError, error) {
+	if body == nil {
+		body = writer.NewRawWriter(strings.NewReader(""))
+	}
+
 	bodyReader, err := body.Reader()
 
 	if err != nil {
@@ -32,6 +37,10 @@ func Request(
 		for key, value := range *headers {
 			request.Header.Add(key, value)
 		}
+	}
+
+	if _, ok := request.Header["Content-Type"]; !ok {
+		request.Header.Add("Content-Type", body.ContentType())
 	}
 
 	response, err := client.Do(request)
@@ -70,7 +79,7 @@ func createResponseObject(response *http.Response) (types.PayloadReader, error) 
 	switch contentType {
 	case "application/xml", "text/xml":
 		return reader.NewXmlReader(response.Body), nil
-	case "application/json", "application/problem+json":
+	case "application/json", "application/problem+json", "application/json; charset=utf-8":
 		return reader.NewJsonReader(response.Body), nil
 	}
 

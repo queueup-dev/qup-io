@@ -38,3 +38,7 @@ func (r rawReader) ToString() (*string, error) {
 	stringResult := string(result)
 	return &stringResult, nil
 }
+
+func (r rawReader) ContentType() string {
+	return "text/plain"
+}

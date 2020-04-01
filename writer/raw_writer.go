@@ -56,3 +56,7 @@ func (r RawWriter) ToString() (*string, error) {
 	output := string(bytes)
 	return &output, nil
 }
+
+func (r RawWriter) ContentType() string {
+	return "text/plain"
+}
