@@ -60,6 +60,10 @@ func (d DynamoWriter) ToString() (*string, error) {
 	return &output, nil
 }
 
+func (d DynamoWriter) ContentType() string {
+	return "application/dynamodb"
+}
+
 func NewDynamoWriter(input interface{}) *DynamoWriter {
 	return &DynamoWriter{input: input}
 }

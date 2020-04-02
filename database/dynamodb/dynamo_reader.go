@@ -44,6 +44,10 @@ func (d DynamoReader) Reader() (io.Reader, error) {
 	return bytes.NewReader(outputBytes), nil
 }
 
+func (d DynamoReader) ContentType() string {
+	return "application/dynamodb"
+}
+
 func (d DynamoReader) ToString() (*string, error) {
 	return nil, nil
 }
