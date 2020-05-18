@@ -78,17 +78,7 @@ func simplifyHeaders(headers http.Header) Headers {
 }
 
 func createResponseObject(response *http.Response) (types.PayloadReader, error) {
-
-	contentType := response.Header.Get("Content-Type")
-
-	switch contentType {
-	case "application/xml", "text/xml":
-		return reader.NewXmlReader(response.Body), nil
-	case "application/json", "application/problem+json", "application/json; charset=utf-8":
-		return reader.NewJsonReader(response.Body), nil
-	}
-
-	return reader.NewRawReader(response.Body), nil
+	return reader.NewReader(response.Header.Get("Content-Type"), response.Body), nil
 }
 
 func isSuccessful(response *http.Response) bool {

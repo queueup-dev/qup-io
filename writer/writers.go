@@ -17,3 +17,7 @@ func NewRawWriter(input interface{}) *RawWriter {
 func NewProtoWriter(input proto.Message) *ProtoWriter {
 	return &ProtoWriter{input: input}
 }
+
+func NewFormEncodeWriter(input interface{}) *FormEncodeWriter {
+	return &FormEncodeWriter{input: input}
+}
