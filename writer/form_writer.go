@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/url"
-	"reflect"
 	"strings"
 )
 
@@ -40,7 +39,6 @@ func (f FormEncodeWriter) Marshal() (interface{}, error) {
 
 	values := url.Values{}
 	for key, val := range targetMap {
-		fmt.Print(reflect.TypeOf(val))
 		arrayValue, isArray := val.(map[string]interface{})
 
 		if isArray {
