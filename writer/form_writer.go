@@ -3,7 +3,6 @@ package writer
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/url"
 	"strings"
@@ -75,12 +74,12 @@ func (f FormEncodeWriter) Valid() bool {
 
 func (f FormEncodeWriter) Reader() (io.Reader, error) {
 	data, err := f.Marshal()
-	fmt.Print(err)
-	content := data.(string)
 
 	if err != nil {
 		return nil, err
 	}
+
+	content := data.(string)
 
 	return strings.NewReader(content), nil
 }
