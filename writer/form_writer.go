@@ -2,8 +2,11 @@ package writer
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"net/url"
+	"reflect"
 	"strings"
 )
 
@@ -28,7 +31,7 @@ func (f FormEncodeWriter) Marshal() (interface{}, error) {
 		return nil, err
 	}
 
-	var targetMap map[string]string
+	var targetMap map[string]interface{}
 	err = json.Unmarshal(encoded, &targetMap)
 
 	if err != nil {
@@ -37,7 +40,26 @@ func (f FormEncodeWriter) Marshal() (interface{}, error) {
 
 	values := url.Values{}
 	for key, val := range targetMap {
-		values.Add(key, val)
+		fmt.Print(reflect.TypeOf(val))
+		arrayValue, isArray := val.(map[string]interface{})
+
+		if isArray {
+			for arrayKey, arrayValue := range arrayValue {
+				values.Add(key+"."+arrayKey, arrayValue.(string))
+			}
+
+			continue
+		}
+
+		stringValue, isString := val.(string)
+
+		if isString {
+			values.Add(key, stringValue)
+
+			continue
+		}
+
+		return nil, errors.New("invalid data type supplied, can only use map[string]string or string values")
 	}
 
 	return values.Encode(), nil
@@ -55,6 +77,7 @@ func (f FormEncodeWriter) Valid() bool {
 
 func (f FormEncodeWriter) Reader() (io.Reader, error) {
 	data, err := f.Marshal()
+	fmt.Print(err)
 	content := data.(string)
 
 	if err != nil {
