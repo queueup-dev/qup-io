@@ -1,6 +1,7 @@
 package reader
 
 import (
+	"fmt"
 	types "github.com/queueup-dev/qup-types"
 	"io"
 	"strings"
@@ -24,15 +25,13 @@ func NewProtoReader(stream io.Reader) *protoReader {
 
 func NewReader(contentType string, stream io.Reader) types.PayloadReader {
 	contentType = strings.ToLower(contentType)
-
+fmt.Print(contentType)
 	switch {
-	case strings.Contains(contentType, "application/xml"):
-	case strings.Contains(contentType, "text/xml"):
+	case strings.Contains(contentType, "text/xml"), strings.Contains(contentType, "application/xml"):
 		return NewXmlReader(stream)
 	case strings.Contains(contentType, "application/json"):
 		return NewJsonReader(stream)
-	case strings.Contains(contentType, "application/x-protobuf"):
-	case strings.Contains(contentType, "application/protobuf"):
+	case strings.Contains(contentType, "application/x-protobuf"), strings.Contains(contentType, "application/protobuf"):
 		return NewProtoReader(stream)
 	}
 
