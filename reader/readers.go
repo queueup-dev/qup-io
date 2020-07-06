@@ -25,7 +25,7 @@ func NewProtoReader(stream io.Reader) *protoReader {
 
 func NewReader(contentType string, stream io.Reader) types.PayloadReader {
 	contentType = strings.ToLower(contentType)
-fmt.Print(contentType)
+
 	switch {
 	case strings.Contains(contentType, "text/xml"), strings.Contains(contentType, "application/xml"):
 		return NewXmlReader(stream)
