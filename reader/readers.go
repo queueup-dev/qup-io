@@ -1,7 +1,6 @@
 package reader
 
 import (
-	"fmt"
 	types "github.com/queueup-dev/qup-types"
 	"io"
 	"strings"
