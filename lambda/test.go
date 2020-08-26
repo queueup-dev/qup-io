@@ -10,13 +10,17 @@ type SomeStruct struct {
 }
 
 var (
-	gatewaypayload  = []byte("{\"Body\":\"{\\\"Foo\\\":123}\"}")
-	snspayload      = []byte("[{\"EventVersion\":\"zxc\",\"SNS\":{\"Message\":\"{\\\"Foo\\\":123}\"}},{\"EventVersion\":\"zxc\",\"SNS\":{\"Message\":\"{\\\"Foo\\\":321}\"}}]")
+	gatewaypayload  = []byte("{\"HTTPMethod\":\"awesome-header\",\"Body\":\"{\\\"Foo\\\":123}\"}")
+	snspayload      = []byte("[{\"EventVersion\":\"zxc\",\"SNS\":{\"Message\":\"{\\\"Foo\\\":1234}\"}},{\"EventVersion\":\"zxc\",\"SNS\":{\"Message\":\"{\\\"Foo\\\":4321}\"}}]")
 	firehosepayload = []byte("{\"Region\":\"blaat\",\"records\":[{\"RecordID\":\"zxc\",\"Data\":\"eyJGb28iOjEyM30=\"},{\"RecordID\":\"asd\",\"Data\":\"eyJGb28iOjMyMX0=\"}]}")
 )
 
-func main2() {
+func main() {
 	obj, err := CompileHandler(handler, false)(context.Background(), gatewaypayload)
+
+	if err != nil {
+		panic(err)
+	}
 
 	ret, err2 := obj()
 
@@ -37,11 +41,10 @@ func main3() {
 	fmt.Println(err2)
 }
 
-func main() {
+func main2() {
 	//val, _ := json.Marshal(struct{Bar []byte}{Bar: []byte("{\"Foo\":321}")})
 	//fmt.Println(string(val))
 
-	fmt.Println(string(firehosepayload))
 	obj, err := CompileChannelHandler(KinesisFirehoseEventChannelHandlerImpl)(context.Background(), firehosepayload)
 
 	if err != nil {
@@ -54,9 +57,10 @@ func main() {
 	fmt.Println(err2)
 }
 
-func handler(ctx context.Context, event APIGatewayProxyRequest, message SomeStruct) (interface{}, error) {
-	fmt.Printf("hi:")
+func handler(ctx context.Context, event *APIGatewayProxyRequest, message *SomeStruct) (interface{}, error) {
+	fmt.Println("hi:")
 	fmt.Println((message).Foo)
+	fmt.Println(event.HTTPMethod)
 
 	return message, nil
 }
@@ -67,8 +71,8 @@ type SnsChanPayload struct {
 }
 
 func SNSEventRecordChannelHandlerImpl(ctx context.Context, channel chan struct {
-	SNSEventRecord SNSEventRecord
-	Body           SomeStruct
+	SNSEventRecord SNSEventRecord `lambda:"event"`
+	Body           SomeStruct     `lambda:"message"`
 }) (interface{}, error) {
 
 	fmt.Println("before reading from channel")
@@ -76,7 +80,7 @@ func SNSEventRecordChannelHandlerImpl(ctx context.Context, channel chan struct {
 	for mes := range channel {
 		fmt.Println("reading a record from the channel")
 
-		fmt.Println(mes.Body)
+		fmt.Println(mes.Body.Foo)
 		fmt.Println(mes.SNSEventRecord.SNSEventRecord.EventVersion)
 	}
 
@@ -85,17 +89,19 @@ func SNSEventRecordChannelHandlerImpl(ctx context.Context, channel chan struct {
 	return nil, nil
 }
 
-func KinesisFirehoseEventChannelHandlerImpl(ctx context.Context, qq KinesisFirehoseEvent, channel chan struct {
-	KinesisFirehoseEventRecord KinesisFirehoseEventRecord
-	Body                       SomeStruct
-}) (interface{}, error) {
+type FirehoseRecord struct {
+	KinesisFirehoseEventRecord KinesisFirehoseEventRecord `lambda:"event"`
+	Body                       SomeStruct                 `lambda:"message"`
+}
 
-	fmt.Println(qq.Region)
+func KinesisFirehoseEventChannelHandlerImpl(ctx context.Context, mainEvent KinesisFirehoseEvent, channel chan FirehoseRecord) (interface{}, chan FirehoseRecord, error) {
+
+	fmt.Println(mainEvent.Region)
 
 	for mes := range channel {
 		fmt.Println(mes.KinesisFirehoseEventRecord.RecordID)
-		fmt.Println(mes.Body)
+		fmt.Println(mes.Body.Foo)
 	}
 
-	return nil, nil
+	return nil, nil, nil
 }

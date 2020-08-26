@@ -171,7 +171,7 @@ func UnmarshalInnerMessage(ctx context.Context, event reflect.Value, eventWasPtr
 	if eventWasPtr {
 		rawMessage = getMessage.Func.Call([]reflect.Value{event.Elem().Elem()})[0]
 	} else {
-		rawMessage = getMessage.Func.Call([]reflect.Value{event})[0]
+		rawMessage = getMessage.Func.Call([]reflect.Value{event.Elem()})[0]
 	}
 
 	if unmarshallText != nil {
