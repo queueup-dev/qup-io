@@ -94,14 +94,15 @@ type FirehoseRecord struct {
 	Body                       SomeStruct                 `lambda:"message"`
 }
 
-func KinesisFirehoseEventChannelHandlerImpl(ctx context.Context, mainEvent KinesisFirehoseEvent, channel chan FirehoseRecord) (interface{}, chan FirehoseRecord, error) {
+func KinesisFirehoseEventChannelHandlerImpl(ctx context.Context, mainEvent *KinesisFirehoseEvent, channel chan FirehoseRecord) (interface{}, error) {
 
-	fmt.Println(mainEvent.Region)
+	fmt.Println("inside firehose handler")
+	fmt.Printf("region: %s\n", mainEvent.Region)
 
 	for mes := range channel {
 		fmt.Println(mes.KinesisFirehoseEventRecord.RecordID)
 		fmt.Println(mes.Body.Foo)
 	}
 
-	return nil, nil, nil
+	return nil, nil
 }

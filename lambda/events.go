@@ -30,7 +30,7 @@ type KinesisFirehoseEvent struct {
 	events.KinesisFirehoseEvent
 }
 
-func (q KinesisFirehoseEvent) GetCollection() interface{} {
+func (q KinesisFirehoseEvent) GetCollection() []events.KinesisFirehoseEventRecord {
 	return q.Records
 }
 

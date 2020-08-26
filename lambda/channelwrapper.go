@@ -12,145 +12,144 @@ type TypeAndPointerDepth struct {
 	PointerDepth int
 }
 
-type ChannelType struct {
-	TypeAndPointerDepth
-	ChannelEnvelopeType struct {
-		Type               reflect.Type
-		AwsEventRecordType TypeAndPointerDepth
-		UserRecord         TypeAndPointerDepth
+type ChannelEnvelopeType struct {
+	Type               reflect.Type
+	AwsEventRecordType struct {
+		TypeAndPointerDepth
+		GetMessageMethod reflect.Method
 	}
+	UserRecord struct {
+		TypeAndPointerDepth
+		UnmarshallMethod *reflect.Method
+	}
+}
+
+type ChannelType struct {
+	Type reflect.Type
+	ChannelEnvelopeType
+}
+
+type MainEventType struct {
+	Type          reflect.Type
+	GetCollection *reflect.Method
+	CastFunction  func(value reflect.Value) reflect.Value
 }
 
 type ChannelHandler struct {
 	ChannelType
-	OptionalAwsEvent struct {
-		Type reflect.Type
+	MainEventType
+	Values struct {
+		ActualChannel reflect.Value
+		DlqChannel    reflect.Value
 	}
 }
 
-//var channel reflect.Value
+func ValidateChannel(in reflect.Type) *ChannelType {
+	var c ChannelType
+
+	if in.Kind() != reflect.Chan {
+		panic(fmt.Errorf("expected the last argument of the handler to be a channel, got: %s", c.Type.Name()))
+	}
+	c.Type = in
+
+	c.ChannelEnvelopeType = *ValidateEnvelope(in.Elem())
+
+	return &c
+}
+
+func ValidateEnvelope(in reflect.Type) *ChannelEnvelopeType {
+	if in.Kind() != reflect.Struct {
+		panic(fmt.Errorf("expected the inner type of the channel to be a struct of 2 elements, got: %s", in.Name()))
+	}
+	c := ChannelEnvelopeType{Type: in}
+
+	c.AwsEventRecordType.Type = c.Type.Field(0).Type
+	c.UserRecord.Type = c.Type.Field(1).Type
+
+	if !c.AwsEventRecordType.Type.Implements(getMessageType) {
+		panic(fmt.Errorf("the first field of the channel struct doesn't implement %s, got: %s", getMessageType.Name(), c.AwsEventRecordType.Type.Name()))
+	}
+	c.AwsEventRecordType.GetMessageMethod, _ = c.AwsEventRecordType.Type.MethodByName("GetMessage")
+
+	if c.UserRecord.Type.Implements(unmarshallTextType) {
+		val, _ := c.UserRecord.Type.MethodByName("UnmarshalText")
+		c.UserRecord.UnmarshallMethod = &val
+	}
+
+	return &c
+}
+
+func ValidateMainEventType(in reflect.Type, AwsEventRecordType reflect.Type) *MainEventType {
+
+	c := MainEventType{Type: in}
+
+	val, ok := c.Type.MethodByName("GetCollection")
+
+	if !ok {
+		panic(fmt.Errorf("handler has 3 arguments but the second argument doesn't have a method called 'GetCollection', got: %s", c.Type.Name()))
+	}
+	if val.Type.NumIn() != 1 || val.Type.NumOut() != 1 {
+		panic(fmt.Errorf("the 'GetCollection' method of the second argument should have zero inputs and one return type"))
+	}
+	collectionType := val.Type.Out(0)
+
+	if !(collectionType.Kind() == reflect.Slice || collectionType.Kind() == reflect.Array) {
+		panic(fmt.Errorf("expected an array or slice in the return type of the 'GetCollection' method, got: %s", collectionType.Kind()))
+	}
+	c.CastFunction = CreateCastWrapper(collectionType.Elem(), AwsEventRecordType)
+	c.GetCollection = &val
+
+	return &c
+}
 
 func CompileChannelHandler(handlerFunc interface{}) func(context.Context, []byte) (func() (interface{}, error), error) {
-
-	handler := reflect.ValueOf(handlerFunc)
 	handlerType := reflect.TypeOf(handlerFunc)
-
-	if handlerType.NumIn() < 2 {
-		panic(fmt.Errorf("something went wrong with casting handler arguments"))
-		//return interface{}(lambda.NewHandler(handlerFunc)).(func(context.Context, []byte) (interface{}, error))
+	if handlerType.Kind() != reflect.Func {
+		panic(fmt.Errorf("expected a function, got: %s", handlerType.Kind()))
+	}
+	if !(handlerType.NumIn() == 2 || handlerType.NumIn() == 3) {
+		panic(fmt.Errorf("expected a handler with 2 or 3 input arguments"))
 	}
 
-	userChannelType := handlerType.In(handlerType.NumIn() - 1)
-
-	if userChannelType.Kind() != reflect.Chan {
-		panic(fmt.Errorf("expected the last argument of the handler to be a channel, got: %s", userChannelType.Name()))
+	// the last input argument is always the channel were the individual records are sent to the handler.
+	inputArguments := ChannelHandler{
+		ChannelType: *ValidateChannel(handlerType.In(handlerType.NumIn() - 1)),
 	}
-
-	if userChannelType.Elem().Kind() != reflect.Struct && userChannelType.Elem().NumField() != 2 {
-		panic(fmt.Errorf("expected the inner type of the channel to be a struct of 2 elements, got: %s", userChannelType.Elem().Name()))
-	}
-
-	chanEventType := userChannelType.Elem().Field(0).Type
-	chanEventInnerType := chanEventType
-	chanEventWasPtr := false
-	channelInnerType := userChannelType.Elem()
-	var chanEventCastType reflect.Type
-
-	if chanEventInnerType.Kind() == reflect.Ptr {
-		chanEventInnerType = chanEventInnerType.Elem()
-		chanEventWasPtr = true
-	}
-
-	if !chanEventInnerType.Implements(getMessageType) {
-		panic(fmt.Errorf("the first field of the channel struct doesn't implement %s, got: %s", getMessageType.Name(), chanEventInnerType.Name()))
-	}
-
-	getMessageMethod, _ := chanEventInnerType.MethodByName("GetMessage")
-
-	messageType := userChannelType.Elem().Field(1).Type
-	innerMessageType := messageType
-	//messageWasPtr := false
-
-	if messageType.Kind() == reflect.Ptr {
-		innerMessageType = innerMessageType.Elem()
-		//messageWasPtr = true
-	}
-
-	var unmarshallText *reflect.Method
-
-	if messageType.Implements(unmarshallTextType) {
-		val, _ := messageType.MethodByName("UnmarshalText")
-		unmarshallText = &val
-	}
-
-	var (
-		chanEventOuterType  reflect.Type
-		getCollectionMethod *reflect.Method
-	)
 
 	if handlerType.NumIn() == 3 {
-		chanEventCastType = chanEventType
-
-		chanEventOuterType = handlerType.In(1)
-		if !chanEventOuterType.Implements(getCollectionType) {
-			panic(fmt.Errorf("handler has 3 arguments but the second argument doesn't implement %s, got: %s", getCollectionType.Name(), chanEventOuterType.Name()))
-		}
-
-		val, _ := chanEventOuterType.MethodByName(getCollectionType.Method(0).Name)
-		getCollectionMethod = &val
-
-		//collectionType := getCollectionMethod.Type.Out(0)
-
-		// @todo have to call the function in order to check the underlying type.
-		//if collectionType.Kind() != reflect.Slice || collectionType.Kind() != reflect.Array {
-		//	panic(fmt.Errorf("expected an array or slice in the return type of %s, got: %s", getCollectionType.Method(0).Name, collectionType.Name()))
-		//}
-
-		//if !chanEventType.AssignableTo(getCollectionMethod.Type.Out(0).Elem()) {
-		//	panic(fmt.Errorf("getcollection and getmessage not comparable"))
-		//}
+		inputArguments.MainEventType = *ValidateMainEventType(handlerType.In(1), inputArguments.ChannelEnvelopeType.AwsEventRecordType.Type)
 	} else if handlerType.NumIn() == 2 {
-		chanEventOuterType = reflect.SliceOf(chanEventType)
-	} else {
-		panic(fmt.Errorf("expected a handler with 2 or 3 arguments"))
+		inputArguments.MainEventType.Type = reflect.SliceOf(inputArguments.ChannelType.ChannelEnvelopeType.AwsEventRecordType.Type)
 	}
 
-	//channel = makeChannel(userChannelType.Elem(), reflect.BothDir, 1)
-	channel := reflect.MakeChan(userChannelType, 0)
+	inputArguments.Values.ActualChannel = reflect.MakeChan(inputArguments.ChannelType.Type, 0)
+	inputArguments.Values.DlqChannel = reflect.MakeChan(reflect.ChanOf(reflect.BothDir, inputArguments.ChannelEnvelopeType.AwsEventRecordType.Type), 0)
 
 	newHandler := func(ctx context.Context, payload []byte) (func() (interface{}, error), error) {
+		clientHandlerArguments := []reflect.Value{
+			reflect.ValueOf(ctx),
+		}
 
-		// reflect.MakeChan(ctype, buffer)
-		event := reflect.New(chanEventOuterType)
-
+		event := reflect.New(inputArguments.MainEventType.Type)
 		err := json.Unmarshal(payload, event.Interface())
-
 		if err != nil {
 			return nil, err
 		}
 
 		var collection reflect.Value
 
-		clientHandlerArguments := []reflect.Value{
-			reflect.ValueOf(ctx),
-		}
-
-		if getCollectionMethod != nil {
-			//if eventWasPtr {
-			//	collection = getCollectionMethod.Func.Call([]reflect.Value{event.Elem().Elem()})[0]
-			//} else {
-			collection = getCollectionMethod.Func.Call([]reflect.Value{event.Elem()})[0]
+		if inputArguments.MainEventType.GetCollection != nil {
+			collection = inputArguments.MainEventType.GetCollection.Func.Call([]reflect.Value{event.Elem()})[0]
 			clientHandlerArguments = append(clientHandlerArguments, event.Elem())
 			//}
 		} else {
-			collection = event
+			collection = event.Elem()
 		}
 
-		go UnmarshallAndSend(ctx, collection, chanEventWasPtr, getMessageMethod, messageType, unmarshallText, channelInnerType, channel, chanEventCastType)
+		go UnmarshallAndSend(ctx, collection, false, inputArguments.ChannelType.ChannelEnvelopeType.AwsEventRecordType.GetMessageMethod, inputArguments.ChannelType.ChannelEnvelopeType.UserRecord.Type, inputArguments.ChannelType.ChannelEnvelopeType.UserRecord.UnmarshallMethod, inputArguments.ChannelType.ChannelEnvelopeType.Type, inputArguments.Values.ActualChannel, inputArguments.MainEventType.CastFunction)
 
-		clientHandlerArguments = append(clientHandlerArguments, channel)
-
-		x, y := InvokeClientLambda(handler, clientHandlerArguments)
+		clientHandlerArguments = append(clientHandlerArguments, inputArguments.Values.ActualChannel)
+		x, y := InvokeClientLambda(reflect.ValueOf(handlerFunc), clientHandlerArguments)
 
 		return func() (interface{}, error) {
 			return x, y
@@ -159,24 +158,35 @@ func CompileChannelHandler(handlerFunc interface{}) func(context.Context, []byte
 	return newHandler
 }
 
-func UnmarshallAndSend(ctx context.Context, collection reflect.Value, chanEventWasPtr bool, getMessageMethod reflect.Method, messageType reflect.Type, unmarshallText *reflect.Method, channelType reflect.Type, channel reflect.Value, eventCastType reflect.Type) {
-	for i := 0; i < collection.Elem().Len(); i++ {
+func CreateCastWrapper(inner reflect.Type, outer reflect.Type) func(reflect.Value) reflect.Value {
+	if !outer.Field(0).Type.AssignableTo(inner) {
+		panic(fmt.Errorf("trying to cast the event record from the 'GetCollection' method to the event record form the channel: from %s to %s\n", inner.Name(), outer.Name()))
+	}
+
+	return func(innerValue reflect.Value) reflect.Value {
+		outerEvent := reflect.New(outer)
+		outerEvent.Elem().Field(0).Set(innerValue)
+		return outerEvent
+	}
+}
+
+func UnmarshallAndSend(ctx context.Context, collection reflect.Value, chanEventWasPtr bool, getMessageMethod reflect.Method, messageType reflect.Type, unmarshallText *reflect.Method, channelType reflect.Type, channel reflect.Value, castFunction func(reflect.Value) reflect.Value) {
+	for i := 0; i < collection.Len(); i++ {
 
 		fmt.Println("unmarshalling a message and sending it on the channel")
 
-		event := collection.Elem().Index(i)
+		event := collection.Index(i)
 		var innerEvent reflect.Value
 
-		if eventCastType != nil {
-			innerEvent = reflect.New(eventCastType)
-			innerEvent.Elem().Field(0).Set(event)
+		if castFunction != nil {
+			innerEvent = castFunction(event)
 		} else {
 			innerEvent = event.Addr()
 		}
 
 		channelMessage := reflect.New(channelType).Elem()
 
-		val, dlqErr := UnmarshalInnerMessage(ctx, innerEvent, false, getMessageMethod, messageType, unmarshallText)
+		val, dlqErr := UnmarshalInnerMessage(ctx, innerEvent, chanEventWasPtr, getMessageMethod, messageType, unmarshallText)
 
 		// @todo add dlq error handling
 		if dlqErr.error != nil {
@@ -192,9 +202,4 @@ func UnmarshallAndSend(ctx context.Context, collection reflect.Value, chanEventW
 
 	fmt.Println("closing the channel")
 	channel.Close()
-}
-
-func makeChannel(t reflect.Type, chanDir reflect.ChanDir, buffer int) reflect.Value {
-	ctype := reflect.ChanOf(chanDir, t)
-	return reflect.MakeChan(ctype, buffer)
 }
