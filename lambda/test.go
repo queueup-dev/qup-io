@@ -12,7 +12,7 @@ type SomeStruct struct {
 var (
 	gatewaypayload  = []byte("{\"Body\":\"{\\\"Foo\\\":123}\"}")
 	snspayload      = []byte("[{\"EventVersion\":\"zxc\",\"SNS\":{\"Message\":\"{\\\"Foo\\\":123}\"}},{\"EventVersion\":\"zxc\",\"SNS\":{\"Message\":\"{\\\"Foo\\\":321}\"}}]")
-	firehosepayload = []byte("{\"Region\":\"blaat\",\"records\":[{\"RecordID\":\"zxc\",\"SNS\":{\"Message\":\"{\\\"Foo\\\":123}\"}},{\"RecordID\":\"zxc\",\"SNS\":{\"Message\":\"{\\\"Foo\\\":321}\"}}]}")
+	firehosepayload = []byte("{\"Region\":\"blaat\",\"records\":[{\"RecordID\":\"zxc\",\"Data\":\"eyJGb28iOjEyM30=\"},{\"RecordID\":\"asd\",\"Data\":\"eyJGb28iOjMyMX0=\"}]}")
 )
 
 func main2() {
@@ -38,6 +38,9 @@ func main3() {
 }
 
 func main() {
+	//val, _ := json.Marshal(struct{Bar []byte}{Bar: []byte("{\"Foo\":321}")})
+	//fmt.Println(string(val))
+
 	fmt.Println(string(firehosepayload))
 	obj, err := CompileChannelHandler(KinesisFirehoseEventChannelHandlerImpl)(context.Background(), firehosepayload)
 
@@ -85,7 +88,7 @@ func SNSEventRecordChannelHandlerImpl(ctx context.Context, channel chan struct {
 func KinesisFirehoseEventChannelHandlerImpl(ctx context.Context, qq KinesisFirehoseEvent, channel chan struct {
 	KinesisFirehoseEventRecord KinesisFirehoseEventRecord
 	Body                       SomeStruct
-}) {
+}) (interface{}, error) {
 
 	fmt.Println(qq.Region)
 
@@ -93,4 +96,6 @@ func KinesisFirehoseEventChannelHandlerImpl(ctx context.Context, qq KinesisFireh
 		fmt.Println(mes.KinesisFirehoseEventRecord.RecordID)
 		fmt.Println(mes.Body)
 	}
+
+	return nil, nil
 }

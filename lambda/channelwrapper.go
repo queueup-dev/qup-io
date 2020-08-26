@@ -7,6 +7,27 @@ import (
 	"reflect"
 )
 
+type TypeAndPointerDepth struct {
+	Type         reflect.Type
+	PointerDepth int
+}
+
+type ChannelType struct {
+	TypeAndPointerDepth
+	ChannelEnvelopeType struct {
+		Type               reflect.Type
+		AwsEventRecordType TypeAndPointerDepth
+		UserRecord         TypeAndPointerDepth
+	}
+}
+
+type ChannelHandler struct {
+	ChannelType
+	OptionalAwsEvent struct {
+		Type reflect.Type
+	}
+}
+
 //var channel reflect.Value
 
 func CompileChannelHandler(handlerFunc interface{}) func(context.Context, []byte) (func() (interface{}, error), error) {
@@ -32,6 +53,8 @@ func CompileChannelHandler(handlerFunc interface{}) func(context.Context, []byte
 	chanEventType := userChannelType.Elem().Field(0).Type
 	chanEventInnerType := chanEventType
 	chanEventWasPtr := false
+	channelInnerType := userChannelType.Elem()
+	var chanEventCastType reflect.Type
 
 	if chanEventInnerType.Kind() == reflect.Ptr {
 		chanEventInnerType = chanEventInnerType.Elem()
@@ -66,6 +89,8 @@ func CompileChannelHandler(handlerFunc interface{}) func(context.Context, []byte
 	)
 
 	if handlerType.NumIn() == 3 {
+		chanEventCastType = chanEventType
+
 		chanEventOuterType = handlerType.In(1)
 		if !chanEventOuterType.Implements(getCollectionType) {
 			panic(fmt.Errorf("handler has 3 arguments but the second argument doesn't implement %s, got: %s", getCollectionType.Name(), chanEventOuterType.Name()))
@@ -121,7 +146,7 @@ func CompileChannelHandler(handlerFunc interface{}) func(context.Context, []byte
 			collection = event
 		}
 
-		go UnmarshallAndSend(ctx, collection, chanEventWasPtr, getMessageMethod, messageType, unmarshallText, userChannelType.Elem(), channel)
+		go UnmarshallAndSend(ctx, collection, chanEventWasPtr, getMessageMethod, messageType, unmarshallText, channelInnerType, channel, chanEventCastType)
 
 		clientHandlerArguments = append(clientHandlerArguments, channel)
 
@@ -134,12 +159,21 @@ func CompileChannelHandler(handlerFunc interface{}) func(context.Context, []byte
 	return newHandler
 }
 
-func UnmarshallAndSend(ctx context.Context, collection reflect.Value, chanEventWasPtr bool, getMessageMethod reflect.Method, messageType reflect.Type, unmarshallText *reflect.Method, channelType reflect.Type, channel reflect.Value) {
+func UnmarshallAndSend(ctx context.Context, collection reflect.Value, chanEventWasPtr bool, getMessageMethod reflect.Method, messageType reflect.Type, unmarshallText *reflect.Method, channelType reflect.Type, channel reflect.Value, eventCastType reflect.Type) {
 	for i := 0; i < collection.Elem().Len(); i++ {
 
 		fmt.Println("unmarshalling a message and sending it on the channel")
 
-		innerEvent := collection.Elem().Index(i)
+		event := collection.Elem().Index(i)
+		var innerEvent reflect.Value
+
+		if eventCastType != nil {
+			innerEvent = reflect.New(eventCastType)
+			innerEvent.Elem().Field(0).Set(event)
+		} else {
+			innerEvent = event.Addr()
+		}
+
 		channelMessage := reflect.New(channelType).Elem()
 
 		val, dlqErr := UnmarshalInnerMessage(ctx, innerEvent, false, getMessageMethod, messageType, unmarshallText)
@@ -150,7 +184,7 @@ func UnmarshallAndSend(ctx context.Context, collection reflect.Value, chanEventW
 			continue
 		}
 
-		channelMessage.Field(0).Set(innerEvent)
+		channelMessage.Field(0).Set(innerEvent.Elem())
 		channelMessage.Field(1).Set(val.Elem())
 
 		channel.Send(channelMessage)
