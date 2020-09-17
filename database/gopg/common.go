@@ -6,7 +6,7 @@ import (
 )
 
 type GoPgConection struct {
-	Database *pg.DB
+	*pg.DB
 }
 
 type ConnectionWithTransacion interface {
@@ -23,7 +23,7 @@ type PGRecord interface {
 }
 
 func (c GoPgConection) RunInTransaction(insert func(Connection) error) error {
-	return c.Database.RunInTransaction(func(in *pg.Tx) error {
+	return c.DB.RunInTransaction(func(in *pg.Tx) error {
 		return insert(in)
 	})
 }
@@ -37,9 +37,9 @@ func SetupConnection(dbUrlString string) (connection GoPgConection) {
 		panic(err)
 	}
 
-	connection.Database = pg.Connect(dbOptions)
+	connection.DB = pg.Connect(dbOptions)
 
-	if _, dbConnectionError := connection.Database.Exec("SELECT 1"); dbConnectionError != nil {
+	if _, dbConnectionError := connection.DB.Exec("SELECT 1"); dbConnectionError != nil {
 		panic(fmt.Errorf("unable to perform test query on database"))
 	}
 
