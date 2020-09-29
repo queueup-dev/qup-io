@@ -6,4 +6,5 @@ phases:
     runtime-versions:
       golang: 1.14
   build:
-    - go test -json ./...
+    commands:
+      - go test -json ./...
