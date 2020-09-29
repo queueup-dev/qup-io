@@ -17,21 +17,9 @@ func Must(s string) string {
 	val, ok := os.LookupEnv(s)
 
 	if !ok {
-		log.Fatalf("the required environment variable %s is missing.", s)
+		log.Printf("the required environment variable %s is missing.", s)
+		panic("the required environment variable %s is missing.")
 	}
 
 	return val
-}
-
-func FilterValuesAndDereference(arr ...*string) ([]string, int) {
-	n := 0
-	b := make([]string, len(arr))
-	for _, val := range arr {
-		if val != nil {
-			b[n] = *val
-			n++
-		}
-	}
-
-	return b[:n], n
 }

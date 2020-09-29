@@ -15,7 +15,7 @@ func (j jsonReader) Unmarshal(object interface{}) error {
 }
 
 func (j jsonReader) Valid() bool {
-	var test string
+	var test map[string]interface{}
 	return j.Unmarshal(&test) == nil
 }
 

@@ -1,0 +1,9 @@
+version: 0.2
+env:
+  variables:
+phases:
+  install:
+    runtime-versions:
+      golang: 1.14
+  build:
+    - go test -json ./...

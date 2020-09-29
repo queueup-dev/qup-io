@@ -42,7 +42,7 @@ func TestSuccessXmlRequest(t *testing.T) {
 
 	headers := http.Header{}
 	headers.Add("Content-Type", "application/xml")
-	result, httpError, err := Request(
+	result, _, httpError, err := Request(
 		&MockClient{
 			statusCode: 200,
 			body:       strings.NewReader("<ResponseObject><status>success</status></ResponseObject>"),
@@ -50,7 +50,7 @@ func TestSuccessXmlRequest(t *testing.T) {
 		},
 		"POST",
 		"http://example.org",
-		&map[string]string{
+		&Headers{
 			"Content-Type": "application/xml",
 		},
 		xmlWriter,
@@ -74,7 +74,7 @@ func TestSuccessXmlRequest(t *testing.T) {
 
 func TestFailedRequest(t *testing.T) {
 	jsonWriter := writer.NewJsonWriter(&HelloWorld{Hello: "world"})
-	_, httpError, err := Request(
+	_, _, httpError, err := Request(
 		&MockClient{
 			statusCode: 400,
 			body:       strings.NewReader("{ \"status\": \"failed\"}"),
@@ -84,7 +84,7 @@ func TestFailedRequest(t *testing.T) {
 		},
 		"POST",
 		"http://example.org",
-		&map[string]string{
+		&Headers{
 			"Content-Type": "application/json",
 		},
 		jsonWriter,
@@ -107,7 +107,7 @@ func TestFailedRequest(t *testing.T) {
 func TestSuccessRequest(t *testing.T) {
 
 	jsonWriter := writer.NewJsonWriter(&HelloWorld{Hello: "world"})
-	result, httpError, err := Request(
+	result, _, httpError, err := Request(
 		&MockClient{
 			statusCode: 200,
 			body:       strings.NewReader("{ \"status\": \"success\"}"),
@@ -117,7 +117,7 @@ func TestSuccessRequest(t *testing.T) {
 		},
 		"POST",
 		"http://example.org",
-		&map[string]string{
+		&Headers{
 			"X-Test-Header": "Hi",
 		},
 		jsonWriter,
