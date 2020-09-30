@@ -7,6 +7,12 @@ import (
 	"strings"
 )
 
+const (
+	reflectTag         = "env"
+	reflectSeparator   = ","
+	reflectRequiredTag = "required"
+)
+
 func ToStruct(input interface{}) error {
 	typeReflection := reflect.TypeOf(input)
 	valueReflection := reflect.ValueOf(input)
@@ -21,15 +27,16 @@ func ToStruct(input interface{}) error {
 
 	for i := 0; i < typeReflection.NumField(); i++ {
 		fieldType := typeReflection.Field(i)
-		rawTag, ok := fieldType.Tag.Lookup("env")
+		rawTag, ok := fieldType.Tag.Lookup(reflectTag)
 
+		// No tag found, continue
 		if !ok {
 			continue
 		}
 
-		parsedTag := strings.Split(rawTag, ",")
+		parsedTag := strings.Split(rawTag, reflectSeparator)
 		tag := parsedTag[0]
-		required := len(parsedTag) > 1 && parsedTag[1] == "required"
+		required := len(parsedTag) > 1 && parsedTag[1] == reflectRequiredTag
 
 		value, err := LookupEnv(tag)
 
@@ -50,7 +57,7 @@ func ToStruct(input interface{}) error {
 		}
 
 		if fieldValue.Kind() != reflect.String {
-			return errors.New("only structure values of type string can be used for envvar mapping")
+			return errors.New("only structure values of type string can be used for env variable mapping")
 		}
 
 		fieldValue.SetString(value)
