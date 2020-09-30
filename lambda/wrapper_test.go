@@ -21,18 +21,19 @@ var (
 	ctx = context.Background()
 )
 
-type TestHandler struct{}
+// Test handler that follows one of the aws signatures as described in the aws documentation of lambda.Start().
+type AwsTestHandler struct{}
 
-func (t TestHandler) Invoke(ctx context.Context, payload TestInput) (*TestOutput, error) {
+func (t AwsTestHandler) Invoke(ctx context.Context, payload TestInput) (*TestOutput, error) {
 	return &TestOutput{Bar: payload.Foo}, nil
 }
 
-func (t TestHandler) ErrorInvoke(ctx context.Context, payload TestInput) (*TestOutput, error) {
+func (t AwsTestHandler) ErrorInvoke(ctx context.Context, payload TestInput) (*TestOutput, error) {
 	return nil, errors.New("foo error")
 }
 
 func TestWrapHandler(t *testing.T) {
-	handler := wrapHandler(TestHandler{}.Invoke)
+	handler := wrapHandler(AwsTestHandler{}.Invoke)
 
 	testCargo := "{ \"Foo\": \"Hello World!\"}"
 	result, err := handler.Invoke(ctx, []byte(testCargo))
@@ -57,7 +58,7 @@ func TestWrapHandler(t *testing.T) {
 }
 
 func TestWrapHandlerWithLogicError(t *testing.T) {
-	handler := wrapHandler(TestHandler{}.ErrorInvoke)
+	handler := wrapHandler(AwsTestHandler{}.ErrorInvoke)
 	testCargo := "{ \"Foo\": \"Hello World!\"}"
 
 	result, err := handler.Invoke(ctx, []byte(testCargo))
@@ -79,7 +80,7 @@ func TestWrapHandlerWithLogicError(t *testing.T) {
 }
 
 func TestWrapHandlerFailInvalidJson(t *testing.T) {
-	handler := wrapHandler(TestHandler{}.Invoke)
+	handler := wrapHandler(AwsTestHandler{}.Invoke)
 	brokenCargo := "{ \"Foo\" \"Hello World!\"}"
 
 	result, err := handler.Invoke(ctx, []byte(brokenCargo))
@@ -102,7 +103,7 @@ func TestWrapHandlerFailInvalidJson(t *testing.T) {
 
 func TestWrapEpsagon(t *testing.T) {
 	testCargo := "{ \"Foo\": \"Hello World!\"}"
-	epsagonWrapped, err := wrapEpsagon(TestHandler{}.Invoke)(ctx, []byte(testCargo))
+	epsagonWrapped, err := wrapEpsagon(AwsTestHandler{}.Invoke).Invoke(ctx, []byte(testCargo))
 
 	if err != nil {
 		log.Print(err)
