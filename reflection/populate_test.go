@@ -447,6 +447,16 @@ func TestPopulateFromStringWithPointer(t *testing.T) {
 		t.Fail()
 	}
 
+	err = PopulateFromString(field, "", false)
+
+	if err != nil {
+		t.Fail()
+	}
+
+	if initializedStruct.Ptr == nil {
+		t.Fail()
+	}
+
 	err = PopulateFromString(field, "Hello World!", false)
 
 	if err != nil {
