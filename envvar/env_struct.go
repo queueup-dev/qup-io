@@ -3,6 +3,7 @@ package envvar
 import (
 	"errors"
 	"fmt"
+	"github.com/queueup-dev/qup-io/reflection"
 	"reflect"
 	"strings"
 )
@@ -38,9 +39,9 @@ func ToStruct(input interface{}) error {
 		tag := parsedTag[0]
 		required := len(parsedTag) > 1 && parsedTag[1] == reflectRequiredTag
 
-		value, err := LookupEnv(tag)
+		value, errString := LookupEnv(tag)
 
-		if err != nil {
+		if errString != nil {
 			if required {
 				return fmt.Errorf("required tag %s is not set in your environment variables", tag)
 			}
@@ -56,11 +57,10 @@ func ToStruct(input interface{}) error {
 			continue
 		}
 
-		if fieldValue.Kind() != reflect.String {
-			return errors.New("only structure values of type string can be used for env variable mapping")
+		err := reflection.PopulateFromString(fieldValue, value, false)
+		if err != nil {
+			return err
 		}
-
-		fieldValue.SetString(value)
 	}
 
 	return nil
