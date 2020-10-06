@@ -4,8 +4,8 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"errors"
+	"github.com/queueup-dev/qup-io/reflection"
 	"reflect"
-	"strconv"
 )
 
 func (m HeaderMapping) Unmarshal(input []string, out interface{}) error {
@@ -59,43 +59,5 @@ func setFieldFromIndexChain(fieldPtr reflect.Value, isPointer bool, index []int,
 }
 
 func setField(field reflect.Value, value string, omitEmpty bool) error {
-	if field.Kind() == reflect.Ptr {
-		if omitEmpty && value == "" {
-			return nil
-		}
-		if field.IsNil() {
-			field.Set(reflect.New(field.Type().Elem()))
-		}
-		field = field.Elem()
-	}
-
-	switch field.Interface().(type) {
-	case string:
-		field.SetString(value)
-	case bool:
-		b, err := strconv.ParseBool(value)
-		if err != nil {
-			return err
-		}
-		field.SetBool(b)
-	case int, int8, int16, int32, int64:
-		i, err := strconv.Atoi(value)
-		if err != nil {
-			return err
-		}
-		field.SetInt(int64(i))
-	case uint, uint8, uint16, uint32, uint64:
-		ui, err := strconv.ParseUint(value, 10, 0)
-		if err != nil {
-			return err
-		}
-		field.SetUint(ui)
-	case float32, float64:
-		f, err := strconv.ParseFloat(value, 0)
-		if err != nil {
-			return err
-		}
-		field.SetFloat(f)
-	}
-	return nil
+	return reflection.PopulateFromString(field, value, omitEmpty)
 }
