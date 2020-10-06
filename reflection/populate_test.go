@@ -1,7 +1,9 @@
 package reflection
 
 import (
+	"fmt"
 	"log"
+	"math"
 	"reflect"
 	"testing"
 )
@@ -330,6 +332,12 @@ func TestPopulateFromStringWithFloat32(t *testing.T) {
 	if initializedStruct.Float32 != 214740000.23781278321 {
 		t.Fail()
 	}
+
+	err = PopulateFromString(field, fmt.Sprintf("%f", math.MaxFloat64), false)
+
+	if err == nil {
+		t.Fail()
+	}
 }
 
 func TestPopulateFromStringWithFloat64(t *testing.T) {
@@ -347,6 +355,12 @@ func TestPopulateFromStringWithFloat64(t *testing.T) {
 	if initializedStruct.Float64 != 9223372036854775800.12382136172 {
 		t.Fail()
 	}
+
+	err = PopulateFromString(field, fmt.Sprintf("1.797693134862315708145274237317043567981e+309"), false)
+
+	if err == nil {
+		t.Fail()
+	}
 }
 
 func TestPopulateFromStringWithBool(t *testing.T) {
@@ -354,7 +368,13 @@ func TestPopulateFromStringWithBool(t *testing.T) {
 	reflectedStruct := reflect.ValueOf(initializedStruct)
 	field := reflectedStruct.Elem().FieldByName("Bool")
 
-	err := PopulateFromString(field, "true", false)
+	err := PopulateFromString(field, "nonbool-lolkek", false)
+
+	if err == nil {
+		t.Fail()
+	}
+
+	err = PopulateFromString(field, "true", false)
 
 	if err != nil {
 		log.Print(err)

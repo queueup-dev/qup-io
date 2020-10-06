@@ -7,15 +7,6 @@ import (
 )
 
 func PopulateFromString(field reflect.Value, value string, omitEmpty bool) error {
-	if field.Kind() == reflect.Ptr {
-		if omitEmpty && value == "" {
-			return nil
-		}
-		if field.IsNil() {
-			field.Set(reflect.New(field.Type().Elem()))
-		}
-		field = field.Elem()
-	}
 	switch field.Kind() {
 	case reflect.String:
 		field.SetString(value)
