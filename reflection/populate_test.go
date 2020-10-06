@@ -18,6 +18,7 @@ type ExampleStruct struct {
 	Float32 float32
 	Float64 float64
 	Bool    bool
+	String  string
 }
 
 func TestPopulateFromStringWithInt8(t *testing.T) {
@@ -343,6 +344,51 @@ func TestPopulateFromStringWithFloat64(t *testing.T) {
 	}
 
 	if initializedStruct.Float64 != 9223372036854775800.12382136172 {
+		t.Fail()
+	}
+}
+
+func TestPopulateFromStringWithBool(t *testing.T) {
+	initializedStruct := &ExampleStruct{}
+	reflectedStruct := reflect.ValueOf(initializedStruct)
+	field := reflectedStruct.Elem().FieldByName("Bool")
+
+	err := PopulateFromString(field, "true", false)
+
+	if err != nil {
+		log.Print(err)
+		t.Fail()
+	}
+
+	if !initializedStruct.Bool {
+		t.Fail()
+	}
+
+	err = PopulateFromString(field, "false", false)
+
+	if err != nil {
+		log.Print(err)
+		t.Fail()
+	}
+
+	if initializedStruct.Bool {
+		t.Fail()
+	}
+}
+
+func TestPopulateFromStringWithString(t *testing.T) {
+	initializedStruct := &ExampleStruct{}
+	reflectedStruct := reflect.ValueOf(initializedStruct)
+	field := reflectedStruct.Elem().FieldByName("String")
+
+	err := PopulateFromString(field, "Hello World!", false)
+
+	if err != nil {
+		log.Print(err)
+		t.Fail()
+	}
+
+	if initializedStruct.String != "Hello World!" {
 		t.Fail()
 	}
 }
