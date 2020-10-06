@@ -19,6 +19,7 @@ type ExampleStruct struct {
 	Float64 float64
 	Bool    bool
 	String  string
+	Map     map[string]int
 }
 
 func TestPopulateFromStringWithInt8(t *testing.T) {
@@ -389,6 +390,22 @@ func TestPopulateFromStringWithString(t *testing.T) {
 	}
 
 	if initializedStruct.String != "Hello World!" {
+		t.Fail()
+	}
+}
+
+func TestPopulateFromStringWithUnsupportedTypeFails(t *testing.T) {
+	initializedStruct := &ExampleStruct{}
+	reflectedStruct := reflect.ValueOf(initializedStruct)
+	field := reflectedStruct.Elem().FieldByName("Map")
+
+	err := PopulateFromString(field, "Hello World!", false)
+
+	if err == nil {
+		t.Fail()
+	}
+
+	if err.Error() != "unsupported field type" {
 		t.Fail()
 	}
 }
