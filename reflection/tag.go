@@ -31,6 +31,11 @@ func GetTagValue(tag string, fieldName string, typeReflection reflect.Type) (str
 		return "", errors.New("supplied field is not defined in the structure")
 	}
 
+	// Don't handle unexported fields
+	if field.PkgPath != "" {
+		return "", errors.New("supplied field is not exported")
+	}
+
 	tagValue, ok := field.Tag.Lookup(tag)
 
 	if !ok {
@@ -51,6 +56,12 @@ func GetTagValues(tag string, typeReflection reflect.Type) ([]string, error) {
 
 	for i := 0; i < typeReflection.NumField(); i++ {
 		fieldType := typeReflection.Field(i)
+
+		// Don't handle unexported fields
+		if fieldType.PkgPath != "" {
+			continue
+		}
+
 		rawTag, ok := fieldType.Tag.Lookup(tag)
 
 		if ok {
@@ -72,6 +83,12 @@ func GetFieldNamesWithTag(tag string, typeReflection reflect.Type) ([]string, er
 
 	for i := 0; i < typeReflection.NumField(); i++ {
 		fieldType := typeReflection.Field(i)
+
+		// Don't handle unexported fields
+		if fieldType.PkgPath != "" {
+			continue
+		}
+
 		_, ok := fieldType.Tag.Lookup(tag)
 
 		if ok {

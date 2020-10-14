@@ -14,6 +14,10 @@ type TestMultiple struct {
 	ReflectTest2 string `test:"Test tag value2"`
 }
 
+type TestUnexportedFails struct {
+	unexportedTest string `test:"tester"`
+}
+
 func TestGetFieldNamesWithExistingTag(t *testing.T) {
 	test := &TestStruct{
 		ReflectTest: "Hello World",
@@ -155,6 +159,50 @@ func TestGetTagValuesWithExistingTag(t *testing.T) {
 	}
 
 	if len(values) != 1 {
+		t.Fail()
+	}
+}
+
+func TestGetTagValuesWithUnexportedTag(t *testing.T) {
+	test := &TestUnexportedFails{
+		unexportedTest: "Hello World",
+	}
+
+	values, err := GetTagValues("test", reflect.TypeOf(test))
+
+	if err != nil {
+		t.Fail()
+	}
+
+	if len(values) != 0 {
+		t.Fail()
+	}
+}
+
+func TestGetFieldNamesWithUnexportedTag(t *testing.T) {
+	test := &TestUnexportedFails{
+		unexportedTest: "Hello World",
+	}
+
+	values, err := GetFieldNamesWithTag("test", reflect.TypeOf(test))
+
+	if err != nil {
+		t.Fail()
+	}
+
+	if len(values) != 0 {
+		t.Fail()
+	}
+}
+
+func TestGetTagValueWithUnexportedTag(t *testing.T) {
+	test := &TestUnexportedFails{
+		unexportedTest: "Hello World",
+	}
+
+	_, err := GetTagValue("test", "unexportedTest", reflect.TypeOf(test))
+
+	if err == nil || err.Error() != "supplied field is not exported" {
 		t.Fail()
 	}
 }
