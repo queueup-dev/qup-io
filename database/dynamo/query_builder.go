@@ -2,9 +2,11 @@ package dynamo
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/queueup-dev/qup-io/slices"
+	"strings"
 )
 
 type QueryBuilder struct {
@@ -14,6 +16,7 @@ type QueryBuilder struct {
 	Query           *dynamodb.QueryInput
 	Errors          []error
 	TargetStruct    interface{}
+	Decoder         *Decoder
 }
 
 func (q QueryBuilder) Equals(field string, value interface{}) QueryBuilder {
@@ -34,6 +37,12 @@ func (q QueryBuilder) EqualOrGreaterThan(field string, value interface{}) QueryB
 
 func (q QueryBuilder) LowerThan(field string, value interface{}) QueryBuilder {
 	return q.addCondition(field, value, "LT")
+}
+
+func (q QueryBuilder) Limit(limit int64) QueryBuilder {
+	q.Query.Limit = &limit
+
+	return q
 }
 
 func (q QueryBuilder) addCondition(field string, value interface{}, operator string) QueryBuilder {
@@ -60,19 +69,64 @@ func (q QueryBuilder) addCondition(field string, value interface{}, operator str
 	return q
 }
 
-func (q QueryBuilder) Execute() *[]error {
-	if q.Errors != nil && len(q.Errors) != 0 {
-		return &q.Errors
+//func (q QueryBuilder) addFilter(field string, value interface{}, operator string) QueryBuilder {
+//
+//}
+
+func (q QueryBuilder) Select(fields []string) QueryBuilder {
+	q.Query.ProjectionExpression = aws.String(strings.Join(fields, ","))
+
+	return q
+}
+
+/**
+ * Returns the count in an integer, similar to the count on a QueryResult but more performant if you just care about the count
+ * The int64 argument is always returned when the list of []error (2nd argument) is empty.
+ */
+func (q QueryBuilder) Count() (int64, *[]error) {
+	if q.hasErrors() {
+		return 0, &q.Errors
+	}
+
+	q.Query.Select = aws.String("COUNT")
+
+	output, err := q.Connection.Query(q.Query)
+
+	if err != nil {
+		return 0, &[]error{err}
+	}
+
+	return *output.Count, nil
+}
+
+/**
+ * Executes the built query and returns the QueryResult.
+ * The QueryResult is always returned when the list of []error (2nd argument) is empty.
+ */
+func (q QueryBuilder) Execute() (*QueryResult, *[]error) {
+	if q.hasErrors() {
+		return nil, &q.Errors
 	}
 
 	output, err := q.Connection.Query(q.Query)
 
 	if err != nil {
-		return &[]error{err}
+		return nil, &[]error{err}
 	}
 
-	fmt.Print(output)
-	return nil
+	return &QueryResult{
+		Result:       output,
+		TargetStruct: q.TargetStruct,
+		Decoder:      q.Decoder,
+	}, nil
+}
+
+func (q QueryBuilder) hasErrors() bool {
+	if q.Errors != nil && len(q.Errors) != 0 {
+		return true
+	}
+
+	return false
 }
 
 func (q QueryBuilder) addIndex(index string) error {

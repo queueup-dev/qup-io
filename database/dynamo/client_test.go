@@ -25,14 +25,15 @@ func TestValues(t *testing.T) {
 
 	database := dynamodb.New(sess)
 	test := CreateNewQupDynamo(database)
+	record := ExampleRecord{}
 
-	builder, err := test.Query("PerfectTiming_Timeslots", &ExampleRecord{})
+	builder, err := test.Query("PerfectTiming_Timeslots", ExampleRecord{})
 
 	if err != nil {
 		t.Fail()
 	}
 
-	errs := builder.Equals("external_id", "5803861a-d475-4726-b9c5-6eb9f395ad6d").Execute()
-
-	fmt.Print(errs)
+	result, _ := builder.Equals("external_id", "5803861a-d475-4726-b9c5-6eb9f395ad6d").Execute()
+	result.First(&record)
+	fmt.Print(record)
 }
