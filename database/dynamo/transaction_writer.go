@@ -6,7 +6,7 @@ import (
 )
 
 type TransactionWriter struct {
-	Connection       *dynamodb.DynamoDB
+	Connection       Connection
 	TableName        string
 	TableDefinition  DynamoTableDefinition
 	TransactionQuery *dynamodb.TransactWriteItemsInput

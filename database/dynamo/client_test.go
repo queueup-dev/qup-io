@@ -3,12 +3,9 @@ package dynamo
 import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"testing"
 )
-
-var ()
 
 type ExampleRecord struct {
 	Id         string `dynamo:"id,pkey"`
@@ -18,22 +15,85 @@ type ExampleRecord struct {
 
 type DynamoRecordDefinition []string
 
-func TestValues(t *testing.T) {
-	sess := session.Must(session.NewSession(&aws.Config{
-		Region: aws.String("eu-west-1"),
-	}))
+func TestQupDynamo_QueryDynamoError(t *testing.T) {
+	connection := TestConnection{
+		MockQueryResult: []map[string]*dynamodb.AttributeValue{
+			{
+				"id": {
+					S: aws.String("test123"),
+				},
+				"external_id": {
+					S: aws.String("external_id123"),
+				},
+				"group_key": {
+					S: aws.String("group_key123"),
+				},
+			},
+		},
+		MockQueryError: fmt.Errorf("unexpected Dynamo error"),
+	}
 
-	database := dynamodb.New(sess)
-	test := CreateNewQupDynamo(database)
-	record := ExampleRecord{}
-
-	builder, err := test.Query("PerfectTiming_Timeslots", ExampleRecord{})
+	test := CreateNewQupDynamo(connection)
+	builder, err := test.Query("mockTable", ExampleRecord{})
 
 	if err != nil {
 		t.Fail()
 	}
 
-	result, _ := builder.Equals("external_id", "5803861a-d475-4726-b9c5-6eb9f395ad6d").Execute()
-	result.First(&record)
-	fmt.Print(record)
+	_, errs := builder.Execute()
+
+	if errs == nil || len(*errs) > 1 {
+		t.Fail()
+	}
+}
+
+func TestQupDynamo_QueryHappyFlow(t *testing.T) {
+	connection := TestConnection{
+		MockQueryResult: []map[string]*dynamodb.AttributeValue{
+			{
+				"id": {
+					S: aws.String("test123"),
+				},
+				"external_id": {
+					S: aws.String("external_id123"),
+				},
+				"group_key": {
+					S: aws.String("group_key123"),
+				},
+			},
+		},
+		MockQueryError: nil,
+	}
+
+	test := CreateNewQupDynamo(connection)
+	builder, err := test.Query("mockTable", ExampleRecord{})
+
+	if err != nil {
+		t.Fail()
+	}
+
+	result, errs := builder.Execute()
+
+	if errs != nil {
+		t.Fail()
+	}
+
+	firstRecord := ExampleRecord{}
+	err = result.First(&firstRecord)
+
+	if err != nil {
+		t.Fail()
+	}
+
+	if firstRecord.ExternalId != "external_id123" {
+		t.Fail()
+	}
+
+	if firstRecord.GroupKey != "group_key123" {
+		t.Fail()
+	}
+
+	if firstRecord.Id != "test123" {
+		t.Fail()
+	}
 }

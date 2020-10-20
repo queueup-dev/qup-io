@@ -6,13 +6,21 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type DynamoValidator interface {
+type Validator interface {
 	Struct(s interface{}) error
 }
 
+type Connection interface {
+	GetItem(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error)
+	DeleteItem(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error)
+	Scan(input *dynamodb.ScanInput) (*dynamodb.ScanOutput, error)
+	TransactWriteItems(input *dynamodb.TransactWriteItemsInput) (*dynamodb.TransactWriteItemsOutput, error)
+	Query(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error)
+}
+
 type QupDynamo struct {
-	Connection *dynamodb.DynamoDB
-	Validator  DynamoValidator
+	Connection Connection
+	Validator  Validator
 	Decoder    Decoder
 	Encoder    Encoder
 }
@@ -58,6 +66,7 @@ func (q QupDynamo) Transaction(table string, object interface{}) (*TransactionWr
 	}
 
 	return &TransactionWriter{
+		Connection:      q.Connection,
 		TableName:       table,
 		TableDefinition: *definition,
 		TransactionQuery: &dynamodb.TransactWriteItemsInput{
@@ -156,7 +165,7 @@ func (q QupDynamo) Scan(table string, target interface{}, limit int64) error {
 	return q.Decoder.UnmarshalListOfMaps(output.Items, target)
 }
 
-func CreateNewQupDynamo(db *dynamodb.DynamoDB) QupDynamo {
+func CreateNewQupDynamo(db Connection) QupDynamo {
 
 	if db == nil {
 

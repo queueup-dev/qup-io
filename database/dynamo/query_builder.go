@@ -10,7 +10,7 @@ import (
 )
 
 type QueryBuilder struct {
-	Connection      *dynamodb.DynamoDB
+	Connection      Connection
 	TableDefinition DynamoTableDefinition
 	Table           string
 	Query           *dynamodb.QueryInput
@@ -166,15 +166,11 @@ func (q QueryBuilder) createKeyCondition(value interface{}, operator string) (*d
 
 func (q QueryBuilder) findIndex(field string) (string, error) {
 
-	if q.TableDefinition.PrimaryKey == field {
-		return primaryKey, nil
-	}
-
 	for index, val := range q.TableDefinition.GlobalSearchIndices {
 		if slices.HasString(field, val) {
 			return index, nil
 		}
 	}
 
-	return "", fmt.Errorf("")
+	return "", fmt.Errorf("unable to find index")
 }
