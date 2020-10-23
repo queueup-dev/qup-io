@@ -11,6 +11,7 @@ type ExampleRecord struct {
 	Id         string `dynamo:"id,pkey"`
 	ExternalId string `dynamo:"external_id,gsi|external_id-group_key"`
 	GroupKey   string `dynamo:"group_key,gsi|external_id-group_key"`
+	OtherField string `dynamo:"other_field,gsi|other_field-index"`
 }
 
 type DynamoRecordDefinition []string
