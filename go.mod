@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/aws/aws-lambda-go v1.17.0
 	github.com/aws/aws-sdk-go v1.32.6
+	github.com/aws/aws-sdk-go-v2 v0.23.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/epsagon/epsagon-go v1.5.0
 	github.com/getsentry/sentry-go v0.5.1 // indirect

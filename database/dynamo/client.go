@@ -167,10 +167,6 @@ func (q QupDynamo) Scan(table string, target interface{}, limit int64) error {
 
 func CreateNewQupDynamo(db Connection) QupDynamo {
 
-	if db == nil {
-
-	}
-
 	return QupDynamo{
 		Connection: db,
 		Validator:  validator.New(),
