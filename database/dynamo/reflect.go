@@ -9,18 +9,18 @@ import (
 )
 
 type DynamoTableDefinition struct {
-	PrimaryKey          string
-	Fields              []string
-	GlobalSearchIndices map[string][]string
+	PrimaryKey string
+	Fields     []string
+	Indices    map[string][]string
 }
 
 const (
-	primaryKey        = "pkey"
-	globalSearchIndex = "gsi"
-	rangeKey          = "range"
-	dynamoBool        = "B"
-	dynamoString      = "S"
-	dynamoNumeric     = "N"
+	primaryIndex   = "key"
+	secondaryIndex = "idx"
+	rangeKey       = "range"
+	dynamoBool     = "B"
+	dynamoString   = "S"
+	dynamoNumeric  = "N"
 )
 
 func tableDefinitionFromStruct(object interface{}) (*DynamoTableDefinition, error) {
@@ -31,7 +31,7 @@ func tableDefinitionFromStruct(object interface{}) (*DynamoTableDefinition, erro
 	}
 
 	definition := &DynamoTableDefinition{
-		GlobalSearchIndices: map[string][]string{},
+		Indices: map[string][]string{},
 	}
 	for _, value := range fields {
 		parsedValue := strings.Split(value, ",")
@@ -45,14 +45,14 @@ func tableDefinitionFromStruct(object interface{}) (*DynamoTableDefinition, erro
 		typeTag := regexp.MustCompile(`\|`).Split(parsedValue[1], -1)
 
 		switch typeTag[0] {
-		case primaryKey:
+		case primaryIndex:
 			definition.PrimaryKey = columnName
-		case globalSearchIndex:
+		case secondaryIndex:
 			if len(typeTag) < 2 {
 				return nil, fmt.Errorf("the %s type should be accompanied with the index name", typeTag[0])
 			}
 
-			definition.GlobalSearchIndices[typeTag[1]] = append(definition.GlobalSearchIndices[typeTag[1]], columnName)
+			definition.Indices[typeTag[1]] = append(definition.Indices[typeTag[1]], columnName)
 		}
 	}
 

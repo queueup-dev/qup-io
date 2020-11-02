@@ -10,6 +10,8 @@ type Validator interface {
 	Struct(s interface{}) error
 }
 
+var _ Connection = &dynamodb.DynamoDB{}
+
 type Connection interface {
 	GetItem(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error)
 	DeleteItem(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error)
@@ -26,7 +28,7 @@ type QupDynamo struct {
 }
 
 /**
- * Retrieves a single record based on the primaryKey and loads it in the supplied record.
+ * Retrieves a single record based on the primaryIndex and loads it in the supplied record.
  */
 func (q QupDynamo) Retrieve(table string, key interface{}, record interface{}) error {
 	attribute, err := dynamodbattribute.Marshal(key)
@@ -38,7 +40,7 @@ func (q QupDynamo) Retrieve(table string, key interface{}, record interface{}) e
 	input := &dynamodb.GetItemInput{
 		TableName: &table,
 		Key: map[string]*dynamodb.AttributeValue{
-			primaryKey: attribute,
+			primaryIndex: attribute,
 		},
 	}
 
@@ -135,7 +137,7 @@ func (q QupDynamo) Delete(table string, key interface{}) error {
 
 	input := &dynamodb.DeleteItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
-			primaryKey: attribute,
+			primaryIndex: attribute,
 		},
 		TableName: &table,
 	}

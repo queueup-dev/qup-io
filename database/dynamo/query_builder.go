@@ -166,7 +166,7 @@ func (q QueryBuilder) createKeyCondition(value interface{}, operator string) (*d
 
 func (q QueryBuilder) findIndex(field string) (string, error) {
 
-	for index, val := range q.TableDefinition.GlobalSearchIndices {
+	for index, val := range q.TableDefinition.Indices {
 		if slices.HasString(field, val) {
 			return index, nil
 		}

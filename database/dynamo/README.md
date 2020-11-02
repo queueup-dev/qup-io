@@ -8,9 +8,9 @@ client := CreateNewQupDynamo( dynamodb.New(sess) )
 #### Retrieve a single item
 ```
 type ExampleRecord struct {
-	Id         string `dynamo:"id,pkey"`
-	ExternalId string `dynamo:"external_id,gsi|gsi-name"`
-	GroupKey   string `dynamo:"group_key,gsi|gsi-name"`
+	Id         string `dynamo:"id,key"`
+	ExternalId string `dynamo:"external_id,idx|gsi-name"`
+	GroupKey   string `dynamo:"group_key,idx|gsi-name"`
 }
 
 record := ExampleRecord{}
