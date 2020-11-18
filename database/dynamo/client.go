@@ -31,8 +31,13 @@ type QupDynamo struct {
  * Retrieves a single record based on the primaryIndex and loads it in the supplied record.
  */
 func (q QupDynamo) Retrieve(table string, key interface{}, record interface{}) error {
-	attribute, err := dynamodbattribute.Marshal(key)
 
+	tableDef, err := tableDefinitionFromStruct(record)
+	if err != nil {
+		return err
+	}
+
+	attribute, err := dynamodbattribute.Marshal(key)
 	if err != nil {
 		return err
 	}
@@ -40,10 +45,9 @@ func (q QupDynamo) Retrieve(table string, key interface{}, record interface{}) e
 	input := &dynamodb.GetItemInput{
 		TableName: &table,
 		Key: map[string]*dynamodb.AttributeValue{
-			primaryIndex: attribute,
+			tableDef.PrimaryKey: attribute,
 		},
 	}
-
 	result, err := q.Connection.GetItem(input)
 
 	if err != nil {
@@ -107,7 +111,6 @@ func (q QupDynamo) Save(table string, record interface{}) error {
 func (q QupDynamo) Query(table string, object interface{}) (*QueryBuilder, error) {
 
 	definition, err := tableDefinitionFromStruct(object)
-
 	if err != nil {
 		return nil, err
 	}
