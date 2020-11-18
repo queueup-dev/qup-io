@@ -130,7 +130,12 @@ func (q QupDynamo) Query(table string, object interface{}) (*QueryBuilder, error
 /**
  * Delete a record from table
  */
-func (q QupDynamo) Delete(table string, key interface{}) error {
+func (q QupDynamo) Delete(table string, key interface{}, record interface{}) error {
+
+	definition, err := tableDefinitionFromStruct(record)
+	if err != nil {
+		return err
+	}
 
 	attribute, err := q.Encoder.Marshal(key)
 
@@ -140,7 +145,7 @@ func (q QupDynamo) Delete(table string, key interface{}) error {
 
 	input := &dynamodb.DeleteItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
-			primaryIndex: attribute,
+			definition.PrimaryKey: attribute,
 		},
 		TableName: &table,
 	}
