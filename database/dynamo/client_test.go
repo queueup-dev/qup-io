@@ -172,7 +172,7 @@ func TestQupDynamo_Delete(t *testing.T) {
 	}
 
 	test := CreateNewQupDynamo(connection)
-	err := test.Delete("mockTabe", "test123")
+	err := test.Delete("mockTable", "test123", &ExampleRecord{})
 
 	if err != nil {
 		t.Fail()
@@ -185,7 +185,7 @@ func TestQupDynamo_DeleteFails(t *testing.T) {
 	}
 
 	test := CreateNewQupDynamo(connection)
-	err := test.Delete("mockTabe", "test123")
+	err := test.Delete("mockTable", "test123", &ExampleRecord{})
 
 	if err == nil {
 		t.Fail()
@@ -228,7 +228,7 @@ func TestQupDynamo_ScanFails(t *testing.T) {
 	test := CreateNewQupDynamo(connection)
 
 	target := make([]ExampleRecord, 2)
-	err := test.Scan("mockTabe", &target, 2)
+	err := test.Scan("mockTable", &target, 2)
 
 	if err == nil {
 		t.Fail()
@@ -270,7 +270,7 @@ func TestQupDynamo_Scan(t *testing.T) {
 	test := CreateNewQupDynamo(connection)
 
 	target := make([]ExampleRecord, 2)
-	err := test.Scan("mockTabe", &target, 2)
+	err := test.Scan("mockTable", &target, 2)
 
 	if err != nil {
 		t.Fail()
