@@ -19,6 +19,20 @@ type QueryBuilder struct {
 	Decoder         *Decoder
 }
 
+type QueryBuilderInterface interface {
+	Equals(field string, value interface{}) QueryBuilder
+	GreaterThan(field string, value interface{}) QueryBuilder
+	EqualOrLowerThan(field string, value interface{}) QueryBuilder
+	EqualOrGreaterThan(field string, value interface{}) QueryBuilder
+	LowerThan(field string, value interface{}) QueryBuilder
+	Limit(limit int64) QueryBuilder
+	Select(fields []string) QueryBuilder
+	Count() (int64, *[]error)
+	Execute() (*QueryResult, *[]error)
+}
+
+var _ QueryBuilderInterface = (*QueryBuilder)(nil)
+
 func (q QueryBuilder) Equals(field string, value interface{}) QueryBuilder {
 	return q.addCondition(field, value, "EQ")
 }

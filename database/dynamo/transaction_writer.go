@@ -14,6 +14,14 @@ type TransactionWriter struct {
 	Encoder          *Encoder
 }
 
+type TransactionWriterInterface interface {
+	Delete(key interface{}) TransactionWriter
+	Save(record interface{}) TransactionWriter
+	Commit() *[]error
+}
+
+var _ TransactionWriterInterface = (*TransactionWriter)(nil)
+
 func (b TransactionWriter) Delete(key interface{}) TransactionWriter {
 
 	dynamodbValue, err := b.Encoder.Marshal(key)

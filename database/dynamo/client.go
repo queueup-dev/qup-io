@@ -10,7 +10,7 @@ type Validator interface {
 	Struct(s interface{}) error
 }
 
-var _ Connection = &dynamodb.DynamoDB{}
+var _ Validator = (*validator.Validate)(nil)
 
 type Connection interface {
 	GetItem(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error)
@@ -20,12 +20,25 @@ type Connection interface {
 	Query(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error)
 }
 
+var _ Connection = (*dynamodb.DynamoDB)(nil)
+
 type QupDynamo struct {
 	Connection Connection
 	Validator  Validator
 	Decoder    Decoder
 	Encoder    Encoder
 }
+
+type QupConnection interface {
+	Retrieve(table string, key interface{}, record interface{}) error
+	Transaction(table string, object interface{}) (*TransactionWriter, error)
+	Save(table string, record interface{}) error
+	Query(table string, object interface{}) (*QueryBuilder, error)
+	Delete(table string, key interface{}, record interface{}) error
+	Scan(table string, target interface{}, limit int64) error
+}
+
+var _ QupConnection = (*QupDynamo)(nil)
 
 /**
  * Retrieves a single record based on the primaryIndex and loads it in the supplied record.
