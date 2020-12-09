@@ -45,7 +45,7 @@ func (q QupDynamo) retrieveQuery(table string, key interface{}, record interface
 	input := &dynamodb.GetItemInput{
 		TableName: &table,
 		Key: map[string]*dynamodb.AttributeValue{
-			tableDef.PrimaryKey: attribute,
+			tableDef.PrimaryKey.Field: attribute,
 		},
 	}
 	result, err := q.Connection.GetItem(input)
@@ -250,7 +250,7 @@ func (q QupDynamo) Delete(table string, key interface{}, record interface{}) err
 
 	input := &dynamodb.DeleteItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
-			definition.PrimaryKey: attribute,
+			definition.PrimaryKey.Field: attribute,
 		},
 		TableName: &table,
 	}

@@ -9,7 +9,7 @@ import (
 type TransactionWriter struct {
 	Connection       Connection
 	TableName        string
-	TableDefinition  DynamoTableDefinition
+	TableDefinition  TableDefinition
 	TransactionQuery *dynamodb.TransactWriteItemsInput
 	Errors           []error
 	Encoder          *Encoder
@@ -26,7 +26,7 @@ func (b TransactionWriter) Delete(key interface{}) TransactionWriter {
 	query := dynamodb.TransactWriteItem{
 		Delete: &dynamodb.Delete{
 			Key: map[string]*dynamodb.AttributeValue{
-				b.TableDefinition.PrimaryKey: dynamodbValue,
+				b.TableDefinition.PrimaryKey.Field: dynamodbValue,
 			},
 			TableName: &b.TableName,
 		},
@@ -66,11 +66,9 @@ func (b TransactionWriter) Create(record interface{}) TransactionWriter {
 
 	query := dynamodb.TransactWriteItem{
 		Put: &dynamodb.Put{
-			Item:      values,
-			TableName: &b.TableName,
-			ConditionExpression: aws.String(
-				fmt.Sprintf("attribute_not_exists(%s)", b.TableDefinition.PrimaryKey),
-			),
+			Item:                values,
+			TableName:           &b.TableName,
+			ConditionExpression: conditionExpression(&b.TableDefinition),
 		},
 	}
 
@@ -92,7 +90,7 @@ func (b TransactionWriter) Update(record interface{}) TransactionWriter {
 			Item:      values,
 			TableName: &b.TableName,
 			ConditionExpression: aws.String(
-				fmt.Sprintf("attribute_exists(%s)", b.TableDefinition.PrimaryKey),
+				fmt.Sprintf("attribute_exists(%s)", b.TableDefinition.PrimaryKey.Field),
 			),
 		},
 	}

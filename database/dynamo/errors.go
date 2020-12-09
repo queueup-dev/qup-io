@@ -16,11 +16,19 @@ type ItemDoesNotExistException struct {
 	Message string
 }
 
+type UniqueViolationException struct {
+	Message string
+}
+
 func (d DuplicateEntryException) Error() string {
 	return d.Message
 }
 
 func (d ItemDoesNotExistException) Error() string {
+	return d.Message
+}
+
+func (d UniqueViolationException) Error() string {
 	return d.Message
 }
 
