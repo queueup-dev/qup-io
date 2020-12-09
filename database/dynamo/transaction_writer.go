@@ -2,6 +2,7 @@ package dynamo
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
@@ -37,6 +38,25 @@ func (b TransactionWriter) Delete(key interface{}) TransactionWriter {
 }
 
 func (b TransactionWriter) Save(record interface{}) TransactionWriter {
+	values, err := b.Encoder.MarshalMap(record)
+
+	if err != nil {
+		return b.addError(err)
+	}
+
+	query := dynamodb.TransactWriteItem{
+		Put: &dynamodb.Put{
+			Item:      values,
+			TableName: &b.TableName,
+		},
+	}
+
+	err = b.addInTransaction(query)
+
+	return b.addError(err)
+}
+
+func (b TransactionWriter) Create(record interface{}) TransactionWriter {
 
 	values, err := b.Encoder.MarshalMap(record)
 
@@ -48,6 +68,32 @@ func (b TransactionWriter) Save(record interface{}) TransactionWriter {
 		Put: &dynamodb.Put{
 			Item:      values,
 			TableName: &b.TableName,
+			ConditionExpression: aws.String(
+				fmt.Sprintf("attribute_not_exists(%s)", b.TableDefinition.PrimaryKey),
+			),
+		},
+	}
+
+	err = b.addInTransaction(query)
+
+	return b.addError(err)
+}
+
+func (b TransactionWriter) Update(record interface{}) TransactionWriter {
+
+	values, err := b.Encoder.MarshalMap(record)
+
+	if err != nil {
+		return b.addError(err)
+	}
+
+	query := dynamodb.TransactWriteItem{
+		Put: &dynamodb.Put{
+			Item:      values,
+			TableName: &b.TableName,
+			ConditionExpression: aws.String(
+				fmt.Sprintf("attribute_exists(%s)", b.TableDefinition.PrimaryKey),
+			),
 		},
 	}
 

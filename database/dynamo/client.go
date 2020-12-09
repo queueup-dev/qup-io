@@ -119,6 +119,66 @@ func (q QupDynamo) Transaction(table string, object interface{}) (*TransactionWr
 }
 
 /**
+ * Updates an item to DynamoDb
+ */
+func (q QupDynamo) Update(table string, record interface{}) error {
+
+	err := q.Validator.Struct(record)
+
+	if err != nil {
+		return err
+	}
+
+	transaction, err := q.Transaction(table, record)
+
+	if err != nil {
+		return err
+	}
+
+	transaction.Update(record)
+	errs := transaction.Commit()
+
+	if errs != nil {
+		return fmt.Errorf("something went wrong while updating the record")
+	}
+
+	return nil
+}
+
+/**
+ * Saves an item to DynamoDb
+ *
+ */
+func (q QupDynamo) Create(table string, record interface{}) error {
+
+	err := q.Validator.Struct(record)
+
+	if err != nil {
+		return err
+	}
+
+	transaction, err := q.Transaction(table, record)
+
+	if err != nil {
+		return err
+	}
+
+	transaction.Create(record)
+	errs := transaction.Commit()
+
+	if errs != nil {
+		for _, err := range *errs {
+			if isConditionalCheckFailedError(err) {
+				return DuplicateEntryException{Message: "Item already exists."}
+			}
+		}
+		return fmt.Errorf("something went wrong while saving the record")
+	}
+
+	return nil
+}
+
+/**
  * Saves an item to DynamoDb
  */
 func (q QupDynamo) Save(table string, record interface{}) error {
@@ -136,7 +196,11 @@ func (q QupDynamo) Save(table string, record interface{}) error {
 	}
 
 	transaction.Save(record)
-	transaction.Commit()
+	errs := transaction.Commit()
+
+	if errs != nil {
+		return fmt.Errorf("something went wrong while saving the record")
+	}
 
 	return nil
 }

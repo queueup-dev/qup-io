@@ -23,8 +23,19 @@ const (
 	dynamoNumeric  = "N"
 )
 
+var (
+	// Not thread safe but doesn't have to be.
+	definitions = make(map[string]*DynamoTableDefinition)
+)
+
 func tableDefinitionFromStruct(object interface{}) (*DynamoTableDefinition, error) {
-	fields, err := reflection.GetTagValues("dynamo", reflect.TypeOf(object))
+	objectType := reflect.TypeOf(object)
+
+	if definitions[objectType.String()] != nil {
+		return definitions[objectType.String()], nil
+	}
+
+	fields, err := reflection.GetTagValues("dynamo", objectType)
 
 	if err != nil {
 		return nil, err
@@ -55,6 +66,8 @@ func tableDefinitionFromStruct(object interface{}) (*DynamoTableDefinition, erro
 			definition.Indices[typeTag[1]] = append(definition.Indices[typeTag[1]], columnName)
 		}
 	}
+
+	definitions[objectType.String()] = definition
 
 	return definition, nil
 }
