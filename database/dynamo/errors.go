@@ -4,15 +4,23 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
-type DuplicateEntryException struct {
-	Message string
-}
-
 const (
 	awsErrConditionalCheckFailed = "ConditionalCheckFailed"
 )
 
+type DuplicateEntryException struct {
+	Message string
+}
+
+type ItemDoesNotExistException struct {
+	Message string
+}
+
 func (d DuplicateEntryException) Error() string {
+	return d.Message
+}
+
+func (d ItemDoesNotExistException) Error() string {
 	return d.Message
 }
 

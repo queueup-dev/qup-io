@@ -139,6 +139,11 @@ func (q QupDynamo) Update(table string, record interface{}) error {
 	errs := transaction.Commit()
 
 	if errs != nil {
+		for _, err := range *errs {
+			if isConditionalCheckFailedError(err) {
+				return ItemDoesNotExistException{Message: "Item does not exist."}
+			}
+		}
 		return fmt.Errorf("something went wrong while updating the record")
 	}
 
