@@ -25,13 +25,20 @@ func (d ItemDoesNotExistException) Error() string {
 }
 
 func isConditionalCheckFailedError(err error) bool {
-	castError, ok := err.(*dynamodb.TransactionCanceledException)
+
+	_, ok := err.(*dynamodb.ConditionalCheckFailedException)
+
+	if ok {
+		return true
+	}
+
+	transactionCastError, ok := err.(*dynamodb.TransactionCanceledException)
 
 	if !ok {
 		return false
 	}
 
-	for _, reason := range castError.CancellationReasons {
+	for _, reason := range transactionCastError.CancellationReasons {
 		if *reason.Code == awsErrConditionalCheckFailed {
 			return true
 		}
