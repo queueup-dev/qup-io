@@ -2,13 +2,14 @@ package dynamo
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
 type TransactionWriter struct {
 	Connection       Connection
 	TableName        string
-	TableDefinition  DynamoTableDefinition
+	TableDefinition  TableDefinition
 	TransactionQuery *dynamodb.TransactWriteItemsInput
 	Errors           []error
 	Encoder          *Encoder
@@ -25,7 +26,7 @@ func (b TransactionWriter) Delete(key interface{}) TransactionWriter {
 	query := dynamodb.TransactWriteItem{
 		Delete: &dynamodb.Delete{
 			Key: map[string]*dynamodb.AttributeValue{
-				b.TableDefinition.PrimaryKey: dynamodbValue,
+				b.TableDefinition.PrimaryKey.Field: dynamodbValue,
 			},
 			TableName: &b.TableName,
 		},
@@ -37,6 +38,46 @@ func (b TransactionWriter) Delete(key interface{}) TransactionWriter {
 }
 
 func (b TransactionWriter) Save(record interface{}) TransactionWriter {
+	values, err := b.Encoder.MarshalMap(record)
+
+	if err != nil {
+		return b.addError(err)
+	}
+
+	query := dynamodb.TransactWriteItem{
+		Put: &dynamodb.Put{
+			Item:      values,
+			TableName: &b.TableName,
+		},
+	}
+
+	err = b.addInTransaction(query)
+
+	return b.addError(err)
+}
+
+func (b TransactionWriter) Create(record interface{}) TransactionWriter {
+
+	values, err := b.Encoder.MarshalMap(record)
+
+	if err != nil {
+		return b.addError(err)
+	}
+
+	query := dynamodb.TransactWriteItem{
+		Put: &dynamodb.Put{
+			Item:                values,
+			TableName:           &b.TableName,
+			ConditionExpression: conditionExpression(&b.TableDefinition),
+		},
+	}
+
+	err = b.addInTransaction(query)
+
+	return b.addError(err)
+}
+
+func (b TransactionWriter) Update(record interface{}) TransactionWriter {
 
 	values, err := b.Encoder.MarshalMap(record)
 
@@ -48,6 +89,9 @@ func (b TransactionWriter) Save(record interface{}) TransactionWriter {
 		Put: &dynamodb.Put{
 			Item:      values,
 			TableName: &b.TableName,
+			ConditionExpression: aws.String(
+				fmt.Sprintf("attribute_exists(%s)", b.TableDefinition.PrimaryKey.Field),
+			),
 		},
 	}
 

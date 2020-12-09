@@ -5,13 +5,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/queueup-dev/qup-io/slices"
 	"strings"
 )
 
 type QueryBuilder struct {
 	Connection      Connection
-	TableDefinition DynamoTableDefinition
+	TableDefinition TableDefinition
 	Table           string
 	Query           *dynamodb.QueryInput
 	Errors          []error
@@ -167,8 +166,11 @@ func (q QueryBuilder) createKeyCondition(value interface{}, operator string) (*d
 func (q QueryBuilder) findIndex(field string) (string, error) {
 
 	for index, val := range q.TableDefinition.Indices {
-		if slices.HasString(field, val) {
-			return index, nil
+
+		for _, rangeField := range val.Fields {
+			if rangeField.Field == field {
+				return index, nil
+			}
 		}
 	}
 
