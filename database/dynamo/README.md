@@ -4,6 +4,13 @@
 ```
 client := CreateNewQupDynamo( dynamodb.New(sess) )
 ```
+#### Supported tags
+| Tag    | description                                       |
+|--------|---------------------------------------------------|
+| key    | Primary key of the record                         |
+| idx    | Indication the field belongs to a SI              |
+| unique | Indicates the field should be unique in the table |
+| range  | Indicates the field is a range key                |
 
 #### Retrieve a single item
 ```
