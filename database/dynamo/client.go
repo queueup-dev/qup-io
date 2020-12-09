@@ -1,6 +1,7 @@
 package dynamo
 
 import (
+	"fmt"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/go-playground/validator/v10"
@@ -28,18 +29,17 @@ type QupDynamo struct {
 }
 
 /**
- * Retrieves a single record based on the primaryIndex and loads it in the supplied record.
+ * Retrieves an item without unmarshalling.
  */
-func (q QupDynamo) Retrieve(table string, key interface{}, record interface{}) error {
-
+func (q QupDynamo) retrieveQuery(table string, key interface{}, record interface{}) (*dynamodb.GetItemOutput, error) {
 	tableDef, err := tableDefinitionFromStruct(record)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	attribute, err := dynamodbattribute.Marshal(key)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	input := &dynamodb.GetItemInput{
@@ -51,10 +51,46 @@ func (q QupDynamo) Retrieve(table string, key interface{}, record interface{}) e
 	result, err := q.Connection.GetItem(input)
 
 	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+/**
+ * Retrieves a single record based on the primaryIndex and loads it in the supplied record.
+ */
+func (q QupDynamo) Retrieve(table string, key interface{}, record interface{}) error {
+
+	result, err := q.retrieveQuery(table, key, record)
+
+	if err != nil {
 		return err
 	}
 
+	if len(result.Item) == 0 {
+		return fmt.Errorf("record not found")
+	}
+
 	return q.Decoder.UnmarshalMap(result.Item, &record)
+}
+
+/**
+ * Checks whether or not the item exists.
+ */
+func (q QupDynamo) Exists(table string, key interface{}, record interface{}) (bool, error) {
+
+	result, err := q.retrieveQuery(table, key, record)
+
+	if err != nil {
+		return false, err
+	}
+
+	if len(result.Item) > 0 {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 /**
