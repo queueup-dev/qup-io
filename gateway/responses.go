@@ -17,7 +17,7 @@ type Envelope struct {
 	Data   interface{} `json:"data"`
 }
 
-func CreateGatewayErrorResponse(message string, err error, status int) events.APIGatewayProxyResponse {
+func CreateGatewayErrorResponse(message string, err error, status int) (events.APIGatewayProxyResponse, error) {
 
 	response := &errorResponse{
 		Type:   "Error",
@@ -35,7 +35,7 @@ func CreateGatewayErrorResponse(message string, err error, status int) events.AP
 	return events.APIGatewayProxyResponse{
 		StatusCode: status,
 		Body:       string(body),
-	}
+	}, nil
 }
 
 func CreateGatewayResponse(body interface{}, headers http.Headers, status int) (events.APIGatewayProxyResponse, error) {
