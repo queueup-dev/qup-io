@@ -38,3 +38,11 @@ func CreateEncoder() Encoder {
 		}),
 	}
 }
+
+func (e Encoder) Must(attribute *dynamodb.AttributeValue, err error) *dynamodb.AttributeValue {
+	if err != nil {
+		panic(err)
+	}
+
+	return attribute
+}

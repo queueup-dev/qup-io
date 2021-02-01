@@ -91,8 +91,15 @@ func (b TransactionWriter) Update(key interface{}, expression string, values map
 		return b.addError(err)
 	}
 
+	expressionAttributeNames := mapExpressionNames(expression)
+
+	if len(expressionAttributeNames) == 0 {
+		return b.addError(fmt.Errorf("no expression attribute names found, did you escape it with a \"#\""))
+	}
+
 	query := dynamodb.TransactWriteItem{
 		Update: &dynamodb.Update{
+			ExpressionAttributeNames:  expressionAttributeNames,
 			ExpressionAttributeValues: mapped,
 			TableName:                 &b.TableName,
 			Key: map[string]*dynamodb.AttributeValue{
@@ -119,9 +126,10 @@ func (b TransactionWriter) SaveExisting(record interface{}) TransactionWriter {
 		Put: &dynamodb.Put{
 			Item:      values,
 			TableName: &b.TableName,
-			ConditionExpression: aws.String(
-				fmt.Sprintf("attribute_exists(%s)", b.TableDefinition.PrimaryKey.Field),
-			),
+			ExpressionAttributeNames: map[string]*string{
+				"#primaryKey": &b.TableDefinition.PrimaryKey.Field,
+			},
+			ConditionExpression: aws.String("attribute_exists(#primaryKey)"),
 		},
 	}
 
