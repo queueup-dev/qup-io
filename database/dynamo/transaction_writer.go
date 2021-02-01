@@ -77,7 +77,7 @@ func (b TransactionWriter) Create(record interface{}) TransactionWriter {
 	return b.addError(err)
 }
 
-func (b TransactionWriter) Update(key interface{}, expression string, values map[string]string) TransactionWriter {
+func (b TransactionWriter) Update(key interface{}, expression string, values map[string]interface{}) TransactionWriter {
 
 	dynamodbValue, err := b.Encoder.Marshal(key)
 

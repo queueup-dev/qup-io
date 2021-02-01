@@ -118,7 +118,7 @@ func (q QupDynamo) Transaction(table string, object interface{}) (*TransactionWr
 	}, nil
 }
 
-func (q QupDynamo) Update(table string, key interface{}, record interface{}, expression string, values map[string]string) error {
+func (q QupDynamo) Update(table string, key interface{}, record interface{}, expression string, values map[string]interface{}) error {
 
 	err := q.Validator.Struct(record)
 
@@ -228,6 +228,7 @@ func (q QupDynamo) Save(table string, record interface{}) error {
 	errs := transaction.Commit()
 
 	if errs != nil {
+		fmt.Print(*errs)
 		return fmt.Errorf("something went wrong while saving the record")
 	}
 
