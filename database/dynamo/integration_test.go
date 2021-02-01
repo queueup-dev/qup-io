@@ -79,8 +79,6 @@ func Setup() {
 	}
 	dbSvc := dynamodb.New(sess)
 
-	CreateTable(dbSvc)
-
 	result, err := dbSvc.ListTables(&dynamodb.ListTablesInput{})
 	if err != nil {
 		log.Println(err)
@@ -89,10 +87,87 @@ func Setup() {
 
 	log.Println("Tables:")
 	for _, table := range result.TableNames {
-		log.Println(*table)
+		if *table == tableName {
+			DeleteTable(dbSvc)
+		}
 	}
 
+	CreateTable(dbSvc)
+
 	qupDynamo = CreateNewQupDynamo(dbSvc)
+}
+
+func TestScan(t *testing.T) {
+
+	Setup()
+
+	person1 := &PersonTest{
+		Id:        uuid.New().String(),
+		FirstName: "John",
+		LastName:  "Doe",
+		City:      "New York",
+		Age:       20,
+	}
+
+	person2 := &PersonTest{
+		Id:        uuid.New().String(),
+		FirstName: "Sara",
+		LastName:  "Jones",
+		City:      "Washington",
+		Age:       29,
+	}
+
+	person3 := &PersonTest{
+		Id:        uuid.New().String(),
+		FirstName: "Peter",
+		LastName:  "Jansen",
+		City:      "Haarlem",
+		Age:       42,
+	}
+
+	person4 := &PersonTest{
+		Id:        uuid.New().String(),
+		FirstName: "Jan",
+		LastName:  "de Wit",
+		City:      "Zoetermeer",
+		Age:       67,
+	}
+
+	err := qupDynamo.Save(tableName, person1)
+
+	if err != nil {
+		t.Log(err.Error())
+		t.Fail()
+	}
+
+	err = qupDynamo.Save(tableName, person2)
+
+	if err != nil {
+		t.Log(err.Error())
+		t.Fail()
+	}
+
+	err = qupDynamo.Save(tableName, person3)
+
+	if err != nil {
+		t.Log(err.Error())
+		t.Fail()
+	}
+
+	err = qupDynamo.Save(tableName, person4)
+
+	if err != nil {
+		t.Log(err.Error())
+		t.Fail()
+	}
+
+	persons := &[]PersonTest{}
+	err = qupDynamo.Scan(tableName, persons, 2)
+
+	if len(*persons) != 2 {
+		t.Fail()
+		t.Log("expected length of 2, length of " + strconv.Itoa(len(*persons)) + " returned")
+	}
 }
 
 func TestPersonCRUD(t *testing.T) {
