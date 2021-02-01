@@ -118,10 +118,7 @@ func (q QupDynamo) Transaction(table string, object interface{}) (*TransactionWr
 	}, nil
 }
 
-/**
- * Updates an item to DynamoDb
- */
-func (q QupDynamo) Update(table string, record interface{}) error {
+func (q QupDynamo) Update(table string, key interface{}, record interface{}, expression string, values map[string]interface{}) error {
 
 	err := q.Validator.Struct(record)
 
@@ -135,7 +132,34 @@ func (q QupDynamo) Update(table string, record interface{}) error {
 		return err
 	}
 
-	transaction.Update(record)
+	transaction.Update(key, expression, values)
+	errs := transaction.Commit()
+
+	if errs != nil {
+		return fmt.Errorf("something went wrong while updating the record")
+	}
+
+	return nil
+}
+
+/**
+ * Updates an item to DynamoDb
+ */
+func (q QupDynamo) SaveExisting(table string, record interface{}) error {
+
+	err := q.Validator.Struct(record)
+
+	if err != nil {
+		return err
+	}
+
+	transaction, err := q.Transaction(table, record)
+
+	if err != nil {
+		return err
+	}
+
+	transaction.SaveExisting(record)
 	errs := transaction.Commit()
 
 	if errs != nil {
@@ -144,7 +168,7 @@ func (q QupDynamo) Update(table string, record interface{}) error {
 				return ItemDoesNotExistException{Message: "Item does not exist."}
 			}
 		}
-		return fmt.Errorf("something went wrong while updating the record")
+		return fmt.Errorf("something went wrong while saving existing record")
 	}
 
 	return nil
@@ -204,6 +228,7 @@ func (q QupDynamo) Save(table string, record interface{}) error {
 	errs := transaction.Commit()
 
 	if errs != nil {
+		fmt.Print(*errs)
 		return fmt.Errorf("something went wrong while saving the record")
 	}
 

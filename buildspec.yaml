@@ -5,4 +5,6 @@ phases:
       golang: 1.14
   build:
     commands:
+      - docker run -d -p 8000:8000 --name docker_dynamo amazon/dynamodb-local
       - go test -json ./...
+      - docker stop docker_dynamo
