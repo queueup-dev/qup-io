@@ -84,3 +84,30 @@ func TestTransactionWriter_CommitFail(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestTransactionWriter_Update(t *testing.T) {
+	connection := TestConnection{
+		MockTransactError: nil,
+	}
+	dynamoClient := CreateNewQupDynamo(connection)
+
+	transaction, err := dynamoClient.Transaction("mockTable", ExampleRecord{})
+
+	if err != nil {
+		t.Fail()
+	}
+
+	testValues := map[string]string{
+		":test": "1234",
+	}
+
+	writer := transaction.Update("12345", "set test = :test", testValues)
+
+	if *writer.TransactionQuery.TransactItems[0].Update.UpdateExpression != "set test = :test" {
+		t.Fail()
+	}
+
+	if *writer.TransactionQuery.TransactItems[0].Update.ExpressionAttributeValues[":test"].S != "1234" {
+		t.Fail()
+	}
+}

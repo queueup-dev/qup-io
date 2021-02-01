@@ -77,7 +77,37 @@ func (b TransactionWriter) Create(record interface{}) TransactionWriter {
 	return b.addError(err)
 }
 
-func (b TransactionWriter) Update(record interface{}) TransactionWriter {
+func (b TransactionWriter) Update(key interface{}, expression string, values map[string]string) TransactionWriter {
+
+	dynamodbValue, err := b.Encoder.Marshal(key)
+
+	if err != nil {
+		return b.addError(err)
+	}
+
+	mapped, err := b.Encoder.MarshalMap(values)
+
+	if err != nil {
+		return b.addError(err)
+	}
+
+	query := dynamodb.TransactWriteItem{
+		Update: &dynamodb.Update{
+			ExpressionAttributeValues: mapped,
+			TableName:                 &b.TableName,
+			Key: map[string]*dynamodb.AttributeValue{
+				b.TableDefinition.PrimaryKey.Field: dynamodbValue,
+			},
+			UpdateExpression: &expression,
+		},
+	}
+
+	err = b.addInTransaction(query)
+
+	return b
+}
+
+func (b TransactionWriter) SaveExisting(record interface{}) TransactionWriter {
 
 	values, err := b.Encoder.MarshalMap(record)
 
