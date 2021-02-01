@@ -79,8 +79,6 @@ func Setup() {
 	}
 	dbSvc := dynamodb.New(sess)
 
-	DeleteTable(dbSvc)
-
 	CreateTable(dbSvc)
 
 	result, err := dbSvc.ListTables(&dynamodb.ListTablesInput{})
