@@ -97,7 +97,7 @@ func TestTransactionWriter_Update(t *testing.T) {
 		t.Fail()
 	}
 
-	testValues := map[string]string{
+	testValues := map[string]interface{}{
 		":test": "1234",
 	}
 
