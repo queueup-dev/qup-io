@@ -7,7 +7,7 @@ import (
 
 func validStruct(typeReflection reflect.Type) (reflect.Type, error) {
 	if typeReflection.Kind() == reflect.Ptr {
-		typeReflection = typeReflection.Elem()
+		return validStruct(typeReflection.Elem())
 	}
 
 	if typeReflection.Kind() != reflect.Struct {
