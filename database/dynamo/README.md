@@ -48,6 +48,27 @@ if err != nil {
 item := result.First(&record)
 ```
 
+### Update an Item
+```
+item := ExampleRecord{
+  Id:  "1234",
+  ExternalId: "45678",
+  GroupKey: "group123",
+  Age: 55,
+}
+
+// Always escape the column name with a #.
+expression := "set #Age = #Age + :new_value"
+values := map[string]interface{}{":new_value": 5}
+
+// Updates the record 1234, and sets the value to 60.
+err := client.Update(tableName, "1234", ExampleRecord{}, expression, values)
+
+if err != nil {
+    // Do error handling
+}
+```
+
 ### Save an Item
 ```
 item := ExampleRecord{
