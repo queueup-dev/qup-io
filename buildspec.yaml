@@ -6,6 +6,5 @@ phases:
   build:
     commands:
       - docker run -d -p 8000:8000 --name docker_dynamo amazon/dynamodb-local
-      - docker wait docker_dynamo
       - go test -json ./...
       - docker stop docker_dynamo
