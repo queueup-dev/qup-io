@@ -101,9 +101,9 @@ func TestTransactionWriter_Update(t *testing.T) {
 		":test": "1234",
 	}
 
-	writer := transaction.Update("12345", "set test = :test", testValues)
+	writer := transaction.Update("12345", "set #test = :test", testValues)
 
-	if *writer.TransactionQuery.TransactItems[0].Update.UpdateExpression != "set test = :test" {
+	if *writer.TransactionQuery.TransactItems[0].Update.UpdateExpression != "set #test = :test" {
 		t.Fail()
 	}
 
