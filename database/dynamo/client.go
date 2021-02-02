@@ -5,6 +5,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/go-playground/validator/v10"
+	"log"
 )
 
 type Validator interface {
@@ -132,10 +133,11 @@ func (q QupDynamo) Update(table string, key interface{}, record interface{}, exp
 		return err
 	}
 
-	transaction.Update(key, expression, values)
-	errs := transaction.Commit()
+	transactionWriter := transaction.Update(key, expression, values)
+	errs := transactionWriter.Commit()
 
 	if errs != nil {
+		log.Print(errs)
 		return fmt.Errorf("something went wrong while updating the record")
 	}
 

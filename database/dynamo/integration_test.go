@@ -97,6 +97,40 @@ func Setup() {
 	qupDynamo = CreateNewQupDynamo(dbSvc)
 }
 
+func TestSaveExisting(t *testing.T) {
+
+	Setup()
+
+	id := uuid.New().String()
+	person := &PersonTest{
+		Id:        id,
+		FirstName: "John",
+		LastName:  "Doe",
+		City:      "New York",
+		Age:       20,
+	}
+
+	err := qupDynamo.SaveExisting(tableName, person)
+
+	if err == nil || err.Error() != "Item does not exist." {
+		t.Fail()
+	}
+
+	err = qupDynamo.Save(tableName, person)
+
+	if err != nil {
+		t.Fail()
+	}
+
+	person.Age = 40
+
+	err = qupDynamo.SaveExisting(tableName, person)
+
+	if err != nil {
+		t.Fail()
+	}
+}
+
 func TestScan(t *testing.T) {
 
 	Setup()
@@ -202,7 +236,7 @@ func TestPersonCRUD(t *testing.T) {
 		t.Fail()
 	}
 
-	expression := "set age = age + :test"
+	expression := "set #age = #age + :test"
 	values := map[string]interface{}{":test": 2}
 
 	err = qupDynamo.Update(tableName, recordId, PersonTest{}, expression, values)
