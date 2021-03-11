@@ -23,6 +23,7 @@ type ExampleStruct struct {
 	String  string
 	Map     map[string]int
 	Ptr     *string
+	Array   []int
 }
 
 func TestPopulateFromStringWithInt8(t *testing.T) {
@@ -426,7 +427,7 @@ func TestPopulateFromStringWithUnsupportedTypeFails(t *testing.T) {
 		t.Fail()
 	}
 
-	if err.Error() != "unsupported field type" {
+	if err.Error() != "unsupported field type, got: map" {
 		t.Fail()
 	}
 }
@@ -464,6 +465,27 @@ func TestPopulateFromStringWithPointer(t *testing.T) {
 	}
 
 	if *initializedStruct.Ptr != "Hello World!" {
+		t.Fail()
+	}
+}
+
+func TestPopulateFromStringWithArray(t *testing.T) {
+	initializedStruct := &ExampleStruct{}
+	reflectedStruct := reflect.ValueOf(initializedStruct)
+	field := reflectedStruct.Elem().FieldByName("Array")
+
+	err := PopulateFromString(field, "[1,2,3]", false)
+
+	if err != nil {
+		log.Print(err)
+		t.Fail()
+	}
+
+	if len(initializedStruct.Array) != 3 {
+		t.Fail()
+	}
+
+	if initializedStruct.Array[0] != 1 && initializedStruct.Array[1] != 2 && initializedStruct.Array[2] != 3 {
 		t.Fail()
 	}
 }

@@ -1,21 +1,57 @@
 package reflection
 
 import (
-	"errors"
+	"encoding/json"
+	"fmt"
 	"reflect"
 	"strconv"
 )
+
+func SetFieldFromIndexChain(field reflect.Value, index []int, value string, fieldInfo StructFieldInfo) error {
+	field = WalkPointer(field)
+
+	if field.Kind() != reflect.Struct {
+		panic(fmt.Errorf("expected a struct, got: %v", field.String()))
+	}
+
+	// because pointers can be nil need to recurse one index at a time and perform nil check
+	if len(index) > 1 {
+		nextField := field.Field(index[0])
+		return SetFieldFromIndexChain(nextField, index[1:], value, fieldInfo)
+	}
+
+	if field.Kind() == reflect.Ptr {
+		if fieldInfo.OmitEmpty && value == "" {
+			return nil
+		}
+
+		if field.Type().Implements(TextEncoderType) {
+			return PopulateFromCustomUnmarshaller(field.FieldByIndex(index), value)
+		}
+
+		field = WalkPointer(field)
+	}
+
+	if fieldInfo.JsonMarshalling {
+		return PopulateFromJsonUnmarshaller(field.FieldByIndex(index), value, fieldInfo.OmitEmpty)
+	}
+
+	return PopulateFromString(field.FieldByIndex(index), value, fieldInfo.OmitEmpty)
+}
 
 func PopulateFromString(field reflect.Value, value string, omitEmpty bool) error {
 	if field.Kind() == reflect.Ptr {
 		if omitEmpty && value == "" {
 			return nil
 		}
-		if field.IsNil() {
-			field.Set(reflect.New(field.Type().Elem()))
-		}
-		field = field.Elem()
+
+		field = WalkPointer(field)
 	}
+
+	if value == "" {
+		return nil
+	}
+
 	switch field.Kind() {
 	case reflect.String:
 		field.SetString(value)
@@ -85,9 +121,64 @@ func PopulateFromString(field reflect.Value, value string, omitEmpty bool) error
 			return err
 		}
 		field.SetFloat(f)
+	case reflect.Struct:
+		if field.Type().Implements(TextEncoderType) {
+			errorValue := field.MethodByName("UnmarshalJSON").Call([]reflect.Value{reflect.ValueOf([]byte(value))})[0]
+			return errorValue.Interface().(error)
+		}
+		return fmt.Errorf("unsupported field type, got struct without custom text decoding method provided")
+	case reflect.Slice:
+		arrayValue := reflect.New(field.Type())
+
+		err := json.Unmarshal([]byte(value), arrayValue.Interface())
+		if err != nil {
+			return err
+		}
+		field.Set(arrayValue.Elem())
 	default:
-		return errors.New("unsupported field type")
+		return fmt.Errorf("unsupported field type, got: %v", field.Kind())
 	}
 
 	return nil
+}
+
+func PopulateFromCustomUnmarshaller(field reflect.Value, value string) error {
+	if value == "" {
+		return nil
+	}
+
+	if field.IsNil() {
+		if field.Elem().Kind() == reflect.Ptr {
+			field.Set(reflect.Zero(field.Type()))
+		}
+		field.Set(reflect.New(field.Type().Elem()))
+	}
+
+	method := field.MethodByName("UnmarshalTEXT")
+	errorValue := method.Call([]reflect.Value{reflect.ValueOf([]byte(value))})[0]
+
+	if errorValue.IsNil() {
+		return nil
+	}
+
+	return errorValue.Interface().(error)
+}
+
+func PopulateFromJsonUnmarshaller(field reflect.Value, value string, omitEmpty bool) error {
+	if value == "" && omitEmpty {
+		return nil
+	}
+
+	if field.Kind() != reflect.Struct && field.IsNil() {
+		if field.Elem().Kind() == reflect.Ptr {
+			field.Set(reflect.Zero(field.Type()))
+		}
+		field.Set(reflect.New(field.Type().Elem()))
+	}
+
+	if value == "" {
+		return nil
+	}
+
+	return json.Unmarshal([]byte(value), field.Interface())
 }
