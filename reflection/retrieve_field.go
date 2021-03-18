@@ -6,26 +6,41 @@ import (
 	"strconv"
 )
 
-func GetFieldValueFromIndexChainAsString(field reflect.Value, index []int) (string, error) {
-
+func GetFieldValueFromIndexChain(structField reflect.Value, index []int) reflect.Value {
 	for {
-		if field.Kind() != reflect.Ptr {
+		if structField.Kind() != reflect.Ptr {
 			break
 		}
 
-		if field.IsNil() {
-			return "", nil
+		if structField.IsNil() {
+			return structField
 		}
 
-		field = field.Elem()
+		structField = structField.Elem()
+	}
+
+	if len(index) == 0 {
+		return structField
 	}
 
 	// because pointers can be nil need to recurse one index at a time and perform nil check
 	if len(index) > 1 {
-		nextField := field.Field(index[0])
-		return GetFieldValueFromIndexChainAsString(nextField, index[1:])
+		nextField := structField.Field(index[0])
+		return GetFieldValueFromIndexChain(nextField, index[1:])
 	}
-	return GetFieldValueAsString(field.FieldByIndex(index))
+
+	return GetFieldValueFromIndexChain(structField.FieldByIndex(index), nil)
+}
+
+func GetFieldValueFromIndexChainAsString(field reflect.Value, index []int) (string, error) {
+
+	value := GetFieldValueFromIndexChain(field, index)
+
+	if value.IsNil() {
+		return "", nil
+	}
+
+	return GetFieldValueAsString(field)
 }
 
 func GetFieldValueAsString(field reflect.Value) (string, error) {

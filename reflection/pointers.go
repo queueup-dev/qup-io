@@ -4,22 +4,26 @@ import (
 	"reflect"
 )
 
-func WalkPointer(typ reflect.Value) reflect.Value {
+func WalkPointer(val reflect.Value, omitEmpty bool) reflect.Value {
 	for {
-		if typ.Kind() != reflect.Ptr {
+		if val.Kind() != reflect.Ptr {
 			break
 		}
 
-		if typ.IsNil() {
-			if typ.Elem().Kind() == reflect.Ptr {
-				typ.Set(reflect.Zero(typ.Type()))
+		if val.IsNil() {
+			if omitEmpty {
+				return val
+			} else {
+				if val.Elem().Kind() == reflect.Ptr {
+					val.Set(reflect.Zero(val.Type()))
+				}
+				val.Set(reflect.New(val.Type().Elem()))
 			}
-			typ.Set(reflect.New(typ.Type().Elem()))
 		}
-		typ = typ.Elem()
+		val = val.Elem()
 	}
 
-	return typ
+	return val
 }
 
 func GetAddressOfStruct(val reflect.Value) reflect.Value {
