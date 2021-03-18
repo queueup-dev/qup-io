@@ -7,14 +7,29 @@ import (
 )
 
 type StructFieldInfo struct {
+	Name              string
 	Type              reflect.Type
+	IndexChain        []int
 	OmitEmpty         bool
 	Required          bool
 	IsArray           bool
 	CustomMarshalling bool
 	JsonMarshalling   bool
-	Name              string
-	IndexChain        []int
+	HasEmptyTag       bool
+}
+
+type DefaultTagParser struct {
+	PlainFieldInfos []*StructFieldInfo
+}
+
+func (b *DefaultTagParser) WriteStruct(structField reflect.StructField, fieldInfo StructFieldInfo, index int) TagInfoWriter {
+	return b
+}
+
+func (b *DefaultTagParser) WriteField(field reflect.StructField, fieldInfo StructFieldInfo, index int) {
+	if !fieldInfo.HasEmptyTag {
+		b.PlainFieldInfos = append(b.PlainFieldInfos, &fieldInfo)
+	}
 }
 
 type TextEncoder interface {
@@ -65,8 +80,8 @@ func getFieldInfoRecursive(typ reflect.Type, tagName string, parentIndexChain []
 	fieldsCount := typ.NumField()
 
 fieldLoop:
-	for i := 0; i < fieldsCount; i++ {
-		field := typ.Field(i)
+	for currentIndex := 0; currentIndex < fieldsCount; currentIndex++ {
+		field := typ.Field(currentIndex)
 
 		if field.PkgPath != "" || (SkipEmbeddedFields && field.Anonymous) {
 			continue fieldLoop
@@ -78,37 +93,10 @@ fieldLoop:
 			continue fieldLoop
 		}
 
-		fieldInfo := StructFieldInfo{}
-
-		var cpy = make([]int, len(parentIndexChain))
-		copy(cpy, parentIndexChain)
-		fieldInfo.IndexChain = append(cpy, i)
-		fieldInfo.Type = field.Type
-
-		tagArray := strings.Split(fieldTag, TagSeparator)
-
-		if tagArray[0] != "" {
-			fieldInfo.Name = tagArray[0]
-		} else {
-			fieldInfo.Name = field.Name
-		}
-
-		for i, tag := range tagArray {
-			if i == 0 {
-				continue
-			}
-			switch tag {
-			case "json":
-				fieldInfo.JsonMarshalling = true
-			case "omitempty":
-				fieldInfo.OmitEmpty = true
-			case "required":
-				fieldInfo.Required = true
-			}
-		}
+		fieldInfo := NewFieldInfo(field, fieldTag, parentIndexChain, currentIndex)
 
 		if fieldInfo.JsonMarshalling {
-			tagWriter.WriteField(field, fieldInfo, i)
+			tagWriter.WriteField(field, fieldInfo, currentIndex)
 			continue fieldLoop
 		}
 
@@ -117,12 +105,12 @@ fieldLoop:
 			// if the field implements JsonEncoding we consider it as merely a field
 			if fieldInfo.Type.Implements(TextEncoderType) {
 				fieldInfo.CustomMarshalling = true
-				tagWriter.WriteField(field, fieldInfo, i)
+				tagWriter.WriteField(field, fieldInfo, currentIndex)
 				continue fieldLoop
 			}
 			if fieldInfo.Type.Kind() == reflect.Array || fieldInfo.Type.Kind() == reflect.Slice {
 				fieldInfo.IsArray = true
-				tagWriter.WriteField(field, fieldInfo, i)
+				tagWriter.WriteField(field, fieldInfo, currentIndex)
 				continue fieldLoop
 			}
 
@@ -134,11 +122,68 @@ fieldLoop:
 
 		// if the field is a struct, that doesn't implement JsonEncoding, create a fieldInfo for each of its fields
 		if fieldInfo.Type.Kind() == reflect.Struct {
-			writer := tagWriter.WriteStruct(field, fieldInfo, i)
+			writer := tagWriter.WriteStruct(field, fieldInfo, currentIndex)
 			getFieldInfoRecursive(fieldInfo.Type, tagName, fieldInfo.IndexChain, parentChainSet, writer)
 			continue fieldLoop
 		}
 
-		tagWriter.WriteField(field, fieldInfo, i)
+		if !CheckAllowedFields(fieldInfo.Type) {
+			fmt.Printf("skipping an unsupported field: %s, kind: %s\n", fieldInfo.Name, fieldInfo.Type.Kind())
+			continue fieldLoop
+		}
+		tagWriter.WriteField(field, fieldInfo, currentIndex)
 	}
+}
+
+func CheckAllowedFields(typ reflect.Type) bool {
+	switch typ.Kind() {
+	case reflect.String:
+		return true
+	case reflect.Bool:
+		return true
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return true
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return true
+	case reflect.Float32:
+		return true
+	case reflect.Float64:
+		return true
+	default:
+		return false
+	}
+}
+
+func NewFieldInfo(field reflect.StructField, fieldTag string, parentIndexChain []int, currentIndex int) StructFieldInfo {
+
+	fieldInfo := StructFieldInfo{}
+
+	var cpy = make([]int, len(parentIndexChain))
+	copy(cpy, parentIndexChain)
+	fieldInfo.IndexChain = append(cpy, currentIndex)
+	fieldInfo.Type = field.Type
+
+	fieldInfo.HasEmptyTag = len(fieldTag) == 0
+
+	tagArray := strings.Split(fieldTag, TagSeparator)
+
+	for i, tag := range tagArray {
+		if i == 0 {
+			if tag != "" {
+				fieldInfo.Name = tag
+			} else {
+				fieldInfo.Name = field.Name
+			}
+		}
+		switch tag {
+		case "json":
+			fieldInfo.JsonMarshalling = true
+		case "omitempty":
+			fieldInfo.OmitEmpty = true
+		case "required":
+			fieldInfo.Required = true
+		}
+	}
+
+	return fieldInfo
 }

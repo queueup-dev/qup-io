@@ -8,7 +8,7 @@ import (
 )
 
 func SetFieldFromIndexChain(field reflect.Value, index []int, value string, fieldInfo StructFieldInfo) error {
-	field = WalkPointer(field)
+	field = WalkPointer(field, false)
 
 	if field.Kind() != reflect.Struct {
 		panic(fmt.Errorf("expected a struct, got: %v", field.String()))
@@ -29,7 +29,7 @@ func SetFieldFromIndexChain(field reflect.Value, index []int, value string, fiel
 			return PopulateFromCustomUnmarshaller(field.FieldByIndex(index), value)
 		}
 
-		field = WalkPointer(field)
+		field = WalkPointer(field, false)
 	}
 
 	if fieldInfo.JsonMarshalling {
@@ -45,7 +45,7 @@ func PopulateFromString(field reflect.Value, value string, omitEmpty bool) error
 			return nil
 		}
 
-		field = WalkPointer(field)
+		field = WalkPointer(field, omitEmpty)
 	}
 
 	if value == "" {
