@@ -108,7 +108,7 @@ func (h *HttpAssertion) RequestBody() *AssertInstance {
 	return h.assertion
 }
 
-type DummyAPI struct {
+type MockAPI struct {
 	router        *mux.Router
 	logger        Logger
 	waitGroup     *sync.WaitGroup
@@ -116,15 +116,15 @@ type DummyAPI struct {
 	mockBuilder   HttpMockBuilder
 }
 
-func (api *DummyAPI) Assert() *HttpAssertBuilder {
+func (api *MockAPI) Assert() *HttpAssertBuilder {
 	return &api.assertBuilder
 }
 
-func (api *DummyAPI) Mock() *HttpMockBuilder {
+func (api *MockAPI) Mock() *HttpMockBuilder {
 	return &api.mockBuilder
 }
 
-func (api *DummyAPI) composeAssertion(assertion *HttpAssertion) func(http.ResponseWriter, *http.Request) {
+func (api *MockAPI) composeAssertion(assertion *HttpAssertion) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if assertion.routeMethod != r.Method {
 			// not for this method, just return
@@ -141,7 +141,7 @@ func (api *DummyAPI) composeAssertion(assertion *HttpAssertion) func(http.Respon
 	}
 }
 
-func (api *DummyAPI) composeMock(mock *HttpMock) func(http.ResponseWriter, *http.Request) {
+func (api *MockAPI) composeMock(mock *HttpMock) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		api.logger.Log("callback fired")
 		if mock.routeMethod != r.Method {
@@ -160,15 +160,18 @@ func (api *DummyAPI) composeMock(mock *HttpMock) func(http.ResponseWriter, *http
 	}
 }
 
-func (api *DummyAPI) compose(callbacks []func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+func (api *MockAPI) compose(callbacks []func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
+	api.waitGroup.Add(1)
 	return func(w http.ResponseWriter, r *http.Request) {
 		for _, callback := range callbacks {
 			callback(w, r)
 		}
+
+		api.waitGroup.Done()
 	}
 }
 
-func (api *DummyAPI) Listen(address string) {
+func (api *MockAPI) Listen(address string) error {
 	r := mux.NewRouter()
 
 	routes := map[string][]func(http.ResponseWriter, *http.Request){}
@@ -192,11 +195,11 @@ func (api *DummyAPI) Listen(address string) {
 		ReadTimeout:  15 * time.Second,
 	}
 
-	srv.ListenAndServe()
+	return srv.ListenAndServe()
 }
 
-func NewDummyApi(t *testing.T, l Logger, wg *sync.WaitGroup) DummyAPI {
-	return DummyAPI{
+func NewDummyApi(t *testing.T, l Logger, wg *sync.WaitGroup) MockAPI {
+	return MockAPI{
 		logger:    l,
 		waitGroup: wg,
 		assertBuilder: HttpAssertBuilder{
