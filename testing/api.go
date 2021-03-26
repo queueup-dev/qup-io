@@ -196,7 +196,7 @@ func (api *MockAPI) Listen(address string) error {
 	return srv.ListenAndServe()
 }
 
-func NewDummyApi(t *testing.T, l Logger, wg *sync.WaitGroup) MockAPI {
+func NewMockApi(t *testing.T, l Logger, wg *sync.WaitGroup) MockAPI {
 	return MockAPI{
 		logger:    l,
 		waitGroup: wg,

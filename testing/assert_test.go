@@ -29,7 +29,7 @@ func TestAssertInstance(t *testing.T) {
 
 func TestDummyAPI_Assert(t *testing.T) {
 	var wg sync.WaitGroup
-	dummyAPI := NewDummyApi(t, StdLogger(1), &wg)
+	dummyAPI := NewMockApi(t, StdLogger(1), &wg)
 
 	dummyAPI.Assert().That("test_uri", "GET").RequestBody().Eq("test123")
 
