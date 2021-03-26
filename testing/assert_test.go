@@ -28,11 +28,12 @@ func TestAssertInstance(t *testing.T) {
 
 func TestDummyAPI_Assert(t *testing.T) {
 	var wg sync.WaitGroup
-	dummyAPI := NewDummyApi(StdLogger(1), &wg)
+	dummyAPI := NewDummyApi(t, StdLogger(1), &wg)
 
-	assertInstance := dummyAPI.Assert(t)
-	assertInstance.That("test_uri", "GET").RequestBody().Eq("test123")
+	dummyAPI.Assert().That("test_uri", "GET").RequestBody().Eq("test123")
 
-	fmt.Println(*assertInstance.httpAssertions[0])
+	dummyAPI.Mock().When("test_uri", "GET").RespondWith(
+		struct{ Hello string }{Hello: "world"}, nil, 200,
+	)
 
 }
