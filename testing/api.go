@@ -1,7 +1,6 @@
 package testing
 
 import (
-	"fmt"
 	"github.com/gorilla/mux"
 	qupHttp "github.com/queueup-dev/qup-io/http"
 	types "github.com/queueup-dev/qup-types"
@@ -18,13 +17,13 @@ const (
 )
 
 type Logger interface {
-	Log(string)
+	Print(...interface{})
 }
 
 type StdLogger int
 
-func (l StdLogger) Log(s string) {
-	log.Println(fmt.Sprintf("Logger %v : "+s, l))
+func (l StdLogger) Print(v ...interface{}) {
+	log.Print(v)
 }
 
 type HttpMockBuilder struct {
@@ -87,7 +86,7 @@ func (builder *HttpAssertBuilder) That(uri string, method string) *HttpAssertion
 func (builder *HttpAssertBuilder) execute(input interface{}) bool {
 	for _, httpAssertion := range builder.httpAssertions {
 		if !httpAssertion.assertion.Execute(input) {
-			builder.log.Log("failed assertion")
+			builder.log.Print("failed assertion")
 			builder.t.Fail()
 		}
 	}
@@ -143,7 +142,6 @@ func (api *MockAPI) composeAssertion(assertion *HttpAssertion) func(http.Respons
 
 func (api *MockAPI) composeMock(mock *HttpMock) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		api.logger.Log("callback fired")
 		if mock.routeMethod != r.Method {
 			// not for this method, just return
 			return
