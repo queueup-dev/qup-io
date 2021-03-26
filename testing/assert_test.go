@@ -2,6 +2,7 @@ package testing
 
 import (
 	"fmt"
+	"github.com/queueup-dev/qup-io/writer"
 	"sync"
 	"testing"
 )
@@ -33,7 +34,7 @@ func TestDummyAPI_Assert(t *testing.T) {
 	dummyAPI.Assert().That("test_uri", "GET").RequestBody().Eq("test123")
 
 	dummyAPI.Mock().When("test_uri", "GET").RespondWith(
-		struct{ Hello string }{Hello: "world"}, nil, 200,
+		writer.NewJsonWriter(struct{ Hello string }{Hello: "world"}), nil, 200,
 	)
 
 }

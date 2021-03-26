@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	qupHttp "github.com/queueup-dev/qup-io/http"
-	"github.com/queueup-dev/qup-io/writer"
 	types "github.com/queueup-dev/qup-types"
 	"io/ioutil"
 	"log"
@@ -23,7 +22,6 @@ type Logger interface {
 }
 
 type StdLogger int
-type RouteHandler func(w http.ResponseWriter, r *http.Request)
 
 func (l StdLogger) Log(s string) {
 	log.Println(fmt.Sprintf("Logger %v : "+s, l))
@@ -51,10 +49,10 @@ type HttpMock struct {
 	response    *HttpMockResponse
 }
 
-func (h *HttpMock) RespondWith(body interface{}, headers qupHttp.Headers, statusCode int) {
+func (h *HttpMock) RespondWith(body types.PayloadWriter, headers qupHttp.Headers, statusCode int) {
 	response := &HttpMockResponse{
 		headers:    headers,
-		body:       writer.NewJsonWriter(body),
+		body:       body,
 		statusCode: statusCode,
 	}
 
