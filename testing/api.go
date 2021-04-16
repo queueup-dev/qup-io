@@ -23,7 +23,7 @@ type Logger interface {
 type StdLogger int
 
 func (l StdLogger) Print(v ...interface{}) {
-	log.Print(v)
+	log.Print(v...)
 }
 
 type HttpMockBuilder struct {
