@@ -135,6 +135,14 @@ func PopulateFromString(field reflect.Value, value string, omitEmpty bool) error
 			return err
 		}
 		field.Set(arrayValue.Elem())
+	case reflect.Map:
+		mapValue := reflect.New(field.Type())
+
+		err := json.Unmarshal([]byte(value), mapValue.Interface())
+		if err != nil {
+			return err
+		}
+		field.Set(mapValue.Elem())
 	default:
 		return fmt.Errorf("unsupported field type, got: %v", field.Kind())
 	}
