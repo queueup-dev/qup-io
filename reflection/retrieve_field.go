@@ -36,11 +36,11 @@ func GetFieldValueFromIndexChainAsString(field reflect.Value, index []int) (stri
 
 	value := GetFieldValueFromIndexChain(field, index)
 
-	if value.IsNil() {
+	if value.IsZero() {
 		return "", nil
 	}
 
-	return GetFieldValueAsString(field)
+	return GetFieldValueAsString(value)
 }
 
 func GetFieldValueAsString(field reflect.Value) (string, error) {
