@@ -1,6 +1,9 @@
 package writer
 
-import "github.com/golang/protobuf/proto"
+import (
+	"github.com/golang/protobuf/proto"
+	"io"
+)
 
 func NewJsonWriter(input interface{}) *JsonWriter {
 	return &JsonWriter{input: input}
@@ -20,4 +23,8 @@ func NewProtoWriter(input proto.Message) *ProtoWriter {
 
 func NewFormEncodeWriter(input interface{}) *FormEncodeWriter {
 	return &FormEncodeWriter{input: input}
+}
+
+func NewStreamWriter(input io.Reader) *StreamWriter {
+	return &StreamWriter{input: input}
 }
