@@ -1,6 +1,7 @@
 package testing
 
 import (
+	"fmt"
 	"github.com/gorilla/mux"
 	qupHttp "github.com/queueup-dev/qup-io/http"
 	types "github.com/queueup-dev/qup-types"
@@ -13,7 +14,8 @@ import (
 )
 
 const (
-	inputTypeRequestBody = "REQUEST_BODY"
+	inputTypeRequestBody   = "REQUEST_BODY"
+	inputTypeRequestHeader = "REQUEST_HEADER"
 )
 
 type Logger interface {
@@ -98,11 +100,19 @@ type HttpAssertion struct {
 	routeUri    string
 	routeMethod string
 	inputValue  string
+	inputFilter string
 	assertion   *AssertInstance
 }
 
 func (h *HttpAssertion) RequestBody() *AssertInstance {
 	h.inputValue = inputTypeRequestBody
+
+	return h.assertion
+}
+
+func (h *HttpAssertion) RequestHeader(header string) *AssertInstance {
+	h.inputValue = inputTypeRequestHeader
+	h.inputFilter = header
 
 	return h.assertion
 }
@@ -134,6 +144,18 @@ func (api *MockAPI) composeAssertion(assertion *HttpAssertion) func(http.Respons
 		case inputTypeRequestBody:
 			read, _ := ioutil.ReadAll(r.Body)
 			if !assertion.assertion.Execute(string(read)) {
+				api.assertBuilder.t.Fail()
+			}
+		case inputTypeRequestHeader:
+			header := r.Header[assertion.inputFilter]
+
+			if header == nil {
+				api.assertBuilder.t.Fail()
+				api.logger.Print(fmt.Sprintf("Unable to find header %s in the request", assertion.inputFilter))
+				return
+			}
+
+			if !assertion.assertion.Execute(header[0]) {
 				api.assertBuilder.t.Fail()
 			}
 		}

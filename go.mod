@@ -14,4 +14,5 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.8.0
 	github.com/queueup-dev/qup-types v0.0.0-20200401155740-1ce32a2f3cd6
+	golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be
 )
