@@ -17,6 +17,12 @@ type Envelope struct {
 	Data   interface{} `json:"data"`
 }
 
+var (
+	CORSHeaders = http.Headers{
+		"Access-Control-Allow-Origin": "*",
+	}
+)
+
 func CreateGatewayErrorResponse(message string, err error, status int) (events.APIGatewayProxyResponse, error) {
 
 	response := &errorResponse{

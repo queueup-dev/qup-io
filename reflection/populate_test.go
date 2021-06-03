@@ -22,7 +22,9 @@ type ExampleStruct struct {
 	Bool    bool
 	String  string
 	Map     map[string]int
+	Func    func()
 	Ptr     *string
+	Array   []int
 }
 
 func TestPopulateFromStringWithInt8(t *testing.T) {
@@ -418,7 +420,7 @@ func TestPopulateFromStringWithString(t *testing.T) {
 func TestPopulateFromStringWithUnsupportedTypeFails(t *testing.T) {
 	initializedStruct := &ExampleStruct{}
 	reflectedStruct := reflect.ValueOf(initializedStruct)
-	field := reflectedStruct.Elem().FieldByName("Map")
+	field := reflectedStruct.Elem().FieldByName("Func")
 
 	err := PopulateFromString(field, "Hello World!", false)
 
@@ -426,7 +428,7 @@ func TestPopulateFromStringWithUnsupportedTypeFails(t *testing.T) {
 		t.Fail()
 	}
 
-	if err.Error() != "unsupported field type" {
+	if err.Error() != "unsupported field type, got: func" {
 		t.Fail()
 	}
 }
@@ -464,6 +466,48 @@ func TestPopulateFromStringWithPointer(t *testing.T) {
 	}
 
 	if *initializedStruct.Ptr != "Hello World!" {
+		t.Fail()
+	}
+}
+
+func TestPopulateFromStringWithArray(t *testing.T) {
+	initializedStruct := &ExampleStruct{}
+	reflectedStruct := reflect.ValueOf(initializedStruct)
+	field := reflectedStruct.Elem().FieldByName("Array")
+
+	err := PopulateFromString(field, "[1,2,3]", false)
+
+	if err != nil {
+		log.Print(err)
+		t.Fail()
+	}
+
+	if len(initializedStruct.Array) != 3 {
+		t.Fail()
+	}
+
+	if initializedStruct.Array[0] != 1 && initializedStruct.Array[1] != 2 && initializedStruct.Array[2] != 3 {
+		t.Fail()
+	}
+}
+
+func TestPopulateFromStringWithMap(t *testing.T) {
+	initializedStruct := &ExampleStruct{}
+	reflectedStruct := reflect.ValueOf(initializedStruct)
+	field := reflectedStruct.Elem().FieldByName("Map")
+
+	err := PopulateFromString(field, `{"a":1,"b":2,"c":3}`, false)
+
+	if err != nil {
+		log.Print(err)
+		t.Fail()
+	}
+
+	if len(initializedStruct.Map) != 3 {
+		t.Fail()
+	}
+
+	if initializedStruct.Map["a"] != 1 && initializedStruct.Map["b"] != 2 && initializedStruct.Map["c"] != 3 {
 		t.Fail()
 	}
 }
