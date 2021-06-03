@@ -10,6 +10,7 @@ type HttpError interface {
 	StatusCode() int
 	Error() string
 	HttpResponse() types.PayloadReader
+	RawMessage() string
 }
 
 type Error struct {
@@ -28,6 +29,12 @@ func (e Error) StatusCode() int {
 
 func (e Error) Error() string {
 	return e.message
+}
+
+func (e Error) RawMessage() string {
+	result, _ := e.response.ToString()
+
+	return *result
 }
 
 func NewHttpError(statusCode int, response types.PayloadReader) HttpError {
