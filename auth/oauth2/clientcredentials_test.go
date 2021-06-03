@@ -47,10 +47,14 @@ func TestClientCredentials_AccessToken(t *testing.T) {
 
 	go mockAPI.Listen("localhost:8000")
 
-	_, err := client.AccessToken()
+	token, err := client.AccessToken()
 
 	if err != nil {
 		fmt.Print(err)
+		t.Fail()
+	}
+
+	if token.AccessToken != "test123" {
 		t.Fail()
 	}
 }
